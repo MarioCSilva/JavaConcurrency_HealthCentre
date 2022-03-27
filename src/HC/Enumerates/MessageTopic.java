@@ -1,5 +1,5 @@
 package HC.Enumerates;
 
 public enum MessageTopic {
-    START, END
+    START, END, SUSPEND, RESUME, STOP, MODE
 }
