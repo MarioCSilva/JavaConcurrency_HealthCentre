@@ -1,10 +1,27 @@
 package CC.Main;
 
-import CC.Controller.Client;
+import CC.Communication.Client;
+import CC.Controller.Controller;
+
+import javax.swing.*;
 
 public class Main {
     public static void main(String[] args){
-        Client client = new Client("localhost",37195);
-        client.run();
+        final String HCHostName = "localhost";
+        final int HCPort = 49470;
+
+        Client client = new Client(HCHostName,HCPort);
+        client.start();
+
+        Controller controller = new Controller(client);
+
+        SwingUtilities.invokeLater(() -> {
+            GUI gui = new GUI(controller);
+            JFrame jf = new JFrame();
+            jf.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+            jf.setSize(800, 500);
+            jf.add(gui.$$$getRootComponent$$$());
+            jf.setVisible(true);
+        });
     }
 }

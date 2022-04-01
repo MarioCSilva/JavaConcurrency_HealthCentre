@@ -5,7 +5,9 @@
     <constraints>
       <xy x="22" y="17" width="996" height="480"/>
     </constraints>
-    <properties/>
+    <properties>
+      <visible value="true"/>
+    </properties>
     <border type="none"/>
     <children>
       <grid id="cc6a7" layout-manager="GridLayoutManager" row-count="1" column-count="1" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
@@ -199,6 +201,9 @@
             <properties>
               <text value="Start"/>
             </properties>
+            <clientProperties>
+              <hideActionText class="java.lang.Boolean" value="false"/>
+            </clientProperties>
           </component>
           <component id="e7865" class="javax.swing.JRadioButton" binding="manualModeRadioButton" default-binding="true">
             <constraints>

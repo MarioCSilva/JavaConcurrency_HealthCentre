@@ -1,18 +1,20 @@
 package CC.Controller;
 
 
+import CC.Communication.Client;
+import HC.Communication.Message;
+import HC.Enumerates.MessageTopic;
+
 public class Controller {
+    private final Client client;
 
-    private final String host;
-    private final Integer port;
-
-    public Controller (String host, Integer port) {
-        this.host = host;
-        this.port = port;
+    public Controller(Client client) {
+        this.client = client;
     }
 
     public void startSimulation() {
         System.out.println("Starting Simulation...");
+        client.sendMsg(new Message(MessageTopic.START));
     }
 
     public void suspendSimulation() {

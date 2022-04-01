@@ -28,9 +28,15 @@ public class ClientHandler implements Runnable {
             // get the input stream of client
             in = new ObjectInputStream(clientSocket.getInputStream());
             Message msg;
-            while ((msg = (Message) in.readObject()) != null) {
+            for (;;) {
+                try {
+                    msg = (Message) in.readObject();
+                } catch (EOFException exc) {
+                    break;
+                }
+
                 System.out.printf(
-                        " Sent from the client: %s\n",
+                        " Sent from the client: %s%n",
                         msg.getTopic());
                 MessageTopic topic = msg.getTopic();
                 if (topic == MessageTopic.START) {
@@ -52,6 +58,8 @@ public class ClientHandler implements Runnable {
                     // the two processes end
                 } else if (topic == MessageTopic.MODE) {
                     // option = {manual, auto}
+                } else {
+                    break;
                 }
             }
         } catch (IOException | ClassNotFoundException e) {

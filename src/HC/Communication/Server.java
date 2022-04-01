@@ -20,20 +20,18 @@ public class Server {
     public void start() {
         try {
             serverSocket = new ServerSocket(port);
-
+            System.out.println(serverSocket.getInetAddress());
+            System.out.println(serverSocket.getLocalPort());
             // running infinite loop for getting
             // client request
             while (true) {
-
                 // socket object to receive incoming client
                 // requests
                 Socket client = serverSocket.accept();
 
                 // Displaying that new client is connected
                 // to server
-                System.out.println("New client connected"
-                        + client.getInetAddress()
-                        .getHostAddress());
+                System.out.println("New client connected");
 
                 // create a new thread object
                 ClientHandler clientSock = new ClientHandler(client);
