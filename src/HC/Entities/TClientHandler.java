@@ -1,17 +1,18 @@
-package HC.Communication;
+package HC.Entities;
 
+import HC.Communication.Message;
 import HC.Enumerates.MessageTopic;
 
 import java.io.*;
 import java.net.Socket;
 
-public class ClientHandler implements Runnable {
+public class TClientHandler implements Runnable {
     private final Socket clientSocket;
     private ObjectInputStream in = null;
     private ObjectOutputStream out = null;
 
     // Constructor
-    public ClientHandler(Socket socket) {
+    public TClientHandler(Socket socket) {
         this.clientSocket = socket;
     }
 

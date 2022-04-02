@@ -1,6 +1,8 @@
 package HC.Communication;
 
 
+import HC.Entities.TClientHandler;
+
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.net.ServerSocket;
@@ -34,7 +36,7 @@ public class Server {
                 System.out.println("New client connected");
 
                 // create a new thread object
-                ClientHandler clientSock = new ClientHandler(client);
+                TClientHandler clientSock = new TClientHandler(client);
 
                 // This thread will handle the client
                 // separately

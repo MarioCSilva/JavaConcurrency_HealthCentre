@@ -8,7 +8,7 @@ import javax.swing.*;
 public class Main {
     public static void main(String[] args){
         final String HCHostName = "localhost";
-        final int HCPort = 49470;
+        final int HCPort = 52950;
 
         Client client = new Client(HCHostName,HCPort);
         client.start();
@@ -20,7 +20,7 @@ public class Main {
             JFrame jf = new JFrame();
             jf.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
             jf.setSize(800, 500);
-            jf.add(gui.$$$getRootComponent$$$());
+            jf.add(gui.getPanel1());
             jf.setVisible(true);
         });
     }

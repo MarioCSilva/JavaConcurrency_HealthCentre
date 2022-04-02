@@ -11,6 +11,10 @@ import java.awt.event.ActionListener;
 public class GUI extends JPanel {
     private Controller controller;
 
+    public JPanel getPanel1() {
+        return panel1;
+    }
+
     private JPanel panel1;
     private JSpinner numberOfChildrenSpinner;
     private JSpinner labelSpinner;
