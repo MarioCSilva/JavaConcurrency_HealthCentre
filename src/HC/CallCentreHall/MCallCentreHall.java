@@ -23,10 +23,10 @@ public class MCallCentreHall {
         try{
             lock1.lock();
             this.ETHNumPatients++;
-        } catch () {}
+        } catch (Exception e) {}
         finally {
             lock1.unlock();
-            this.cc.signal();
+            this.cc.getRunCondition().signal();
         }
     }
 

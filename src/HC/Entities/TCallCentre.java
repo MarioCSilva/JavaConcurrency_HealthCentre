@@ -18,7 +18,9 @@ public class TCallCentre extends Thread {
         this.run = rl.newCondition();
     }
 
-
+    public Condition getRunCondition(){
+        return run;
+    }
     @Override
     public void run() {
         while (true) {
