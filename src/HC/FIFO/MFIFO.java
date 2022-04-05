@@ -14,7 +14,6 @@ public class MFIFO implements IFIFO {
     private final Condition cNotFull;
     private final Condition cNotEmpty;
 
-    
     public MFIFO(int size) {
         this.size = size;
         this.fifo = new int[ size ];
@@ -57,7 +56,7 @@ public class MFIFO implements IFIFO {
         }
     }
 
-    private int getHead() {
+    public int getHead() {
         return fifo[ idxGet % size ];
     }
 

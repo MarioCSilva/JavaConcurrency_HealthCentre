@@ -1,6 +1,6 @@
 package HC.FIFO;
 
 public interface IFIFO {
-    public void put(int patientId);
-    public int get();
+    void put(int patientId);
+    int get();
 }
