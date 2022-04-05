@@ -3,24 +3,42 @@ package HC.Entities;
 
 import HC.EntranceHall.IEntranceHall_CallCenter;
 
+import java.util.concurrent.locks.Condition;
+import java.util.concurrent.locks.ReentrantLock;
+
 public class TCallCentre extends Thread {
-    private int ETHNumPatients = 0;
-    private int EVHNumPatients = 0;
     private final IEntranceHall_CallCenter eth;
+
+    private final ReentrantLock rl;
+    private final Condition run;
 
     public TCallCentre(IEntranceHall_CallCenter eth) {
         this.eth = eth;
+        this.rl = new ReentrantLock();
+        this.run = rl.newCondition();
     }
 
-    public void notifyETHEntrance() {
-        this.ETHNumPatients++;
 
-        this.callETHPatient();
+    @Override
+    public void run() {
+        while (true) {
+            try {
+                this.run.await();
+
+
+                if (true) {
+                    this.callETHPatient();
+                }
+
+
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+        }
+
     }
 
     private void callETHPatient() {
-        if (EVHNumPatients > 0) {
-            eth.exitHall();
-        }
+        eth.exitHall();
     }
 }
