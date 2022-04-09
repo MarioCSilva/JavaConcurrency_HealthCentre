@@ -1,0 +1,1 @@
+NoA: 0, NoC:YY, NoS: ZZNoA: 7, NoC: 2, NoS: 3NoA: 1, NoC: 1, NoS: 1

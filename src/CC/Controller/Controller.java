@@ -12,9 +12,19 @@ public class Controller {
         this.client = client;
     }
 
-    public void startSimulation() {
+    public void startSimulation(int numberOfAdults, int numberOfChildren, int nos, int evt, int mdt, int pyt, int ttm) {
         System.out.println("Starting Simulation...");
-        client.sendMsg(new Message(MessageTopic.START));
+        client.sendMsg(
+                new Message(
+                        MessageTopic.START,
+                        numberOfAdults,
+                        numberOfChildren,
+                        nos,
+                        evt,
+                        mdt,
+                        pyt,
+                        ttm
+                        ));
     }
 
     public void suspendSimulation() {

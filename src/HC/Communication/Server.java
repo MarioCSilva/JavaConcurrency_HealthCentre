@@ -2,6 +2,8 @@ package HC.Communication;
 
 
 import HC.Entities.TClientHandler;
+import HC.Logger.ILog_ClientHandler;
+import HC.Logger.MLog;
 
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
@@ -14,9 +16,11 @@ public class Server {
     private ServerSocket serverSocket;
     private ObjectInputStream in = null;
     private ObjectOutputStream out = null;
+    private ILog_ClientHandler logger;
 
     public Server(int port) {
-        port = port;
+        this.port = port;
+        this.logger = (ILog_ClientHandler) new MLog();
     }
 
     public void start() {
@@ -36,7 +40,7 @@ public class Server {
                 System.out.println("New client connected");
 
                 // create a new thread object
-                TClientHandler clientSock = new TClientHandler(client);
+                TClientHandler clientSock = new TClientHandler(client, logger);
 
                 // This thread will handle the client
                 // separately
