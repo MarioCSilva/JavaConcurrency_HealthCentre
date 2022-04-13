@@ -1,6 +1,8 @@
 package HC.FIFO;
 
+import HC.Entities.TPatient;
+
 public interface IFIFO {
-    void put(int patientId);
-    int get();
+    void put(TPatient patient);
+    void get();
 }

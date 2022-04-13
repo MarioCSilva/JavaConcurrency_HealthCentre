@@ -2,13 +2,19 @@ package HC.Entities;
 
 import HC.CallCentreHall.ICallCentreHall_CallCentre;
 import HC.CallCentreHall.ICallCentreHall_EntranceHall;
+import HC.CallCentreHall.ICallCentreHall_EvaluationHall;
 import HC.CallCentreHall.MCallCentreHall;
 import HC.Communication.Message;
 import HC.EntranceHall.IEntranceHall_CallCenter;
 import HC.EntranceHall.IEntranceHall_Patient;
 import HC.EntranceHall.MEntranceHall;
 import HC.Enumerates.MessageTopic;
+import HC.EvaluationHall.IEvaluationHall_Patient;
+import HC.EvaluationHall.MEvaluationHall;
 import HC.Logger.ILog_ClientHandler;
+import HC.Logger.ILog_EntranceHall;
+import HC.Logger.ILog_EvaluationHall;
+import HC.Logger.MLog;
 
 import java.io.*;
 import java.net.Socket;
@@ -19,36 +25,43 @@ public class TClientHandler implements Runnable {
     private ObjectOutputStream out = null;
     private MCallCentreHall cch;
     private MEntranceHall eth;
+    private MEvaluationHall meh;
     private TAdultPatient adultPatients[];
     private TChildPatient childPatients[];
     private TCallCentre cc;
-    private ILog_ClientHandler logger;
+    private ILog_ClientHandler clientLogger;
+    private MLog defaultLogger;
     
 
-    public TClientHandler(Socket socket, ILog_ClientHandler logger) {
+    public TClientHandler(Socket socket, MLog logger) {
         this.clientSocket = socket;
-        this.logger = logger;
+        this.clientLogger = (ILog_ClientHandler) logger;
+        this.defaultLogger = logger;
     }
 
     public void startSimulation(Message msg) {
-        logger.write(String.format("NoA: %d, NoC: %d, NoS: %d", msg.getNumberOfAdults(), msg.getNumberOfChildren(), msg.getNos()));
-        
-        // initiate monitors
-        cch = new MCallCentreHall();
-        eth = new MEntranceHall( (int) msg.getNos()/2, (ICallCentreHall_EntranceHall) cch );
+        clientLogger.write(String.format("NoA: %d, NoC: %d, NoS: %d", msg.getNumberOfAdults(), msg.getNumberOfChildren(), msg.getNos()));
+        clientLogger.writeHeaders();
+        clientLogger.writeState("INIT");
 
+        // initiate monitors
+        cch = new MCallCentreHall(msg.getNos());
+        eth = new MEntranceHall((ILog_EntranceHall) defaultLogger, (int) msg.getNos()/2, (ICallCentreHall_EntranceHall) cch);
+        meh = new MEvaluationHall((ILog_EvaluationHall) defaultLogger, msg.getNos(), msg.getEvt(), (ICallCentreHall_EvaluationHall) cch);
         // initiate entities
         cc = new TCallCentre((IEntranceHall_CallCenter) eth, (ICallCentreHall_CallCentre) cch);
+
+        clientLogger.writeState("RUN");
         cc.start();
         adultPatients = new TAdultPatient[msg.getNumberOfAdults()];
         childPatients = new TChildPatient[msg.getNumberOfChildren()];
         int patientId = 0;
-        for(int i = 0; i < msg.getNumberOfAdults(); i++) {
-            adultPatients[i] = new TAdultPatient(patientId++, (IEntranceHall_Patient) eth);
+        for(int i=0; i<msg.getNumberOfAdults(); i++) {
+            adultPatients[i] = new TAdultPatient(patientId++, msg.getTtm(), (IEntranceHall_Patient) eth, (IEvaluationHall_Patient) meh);
             adultPatients[i].start();
         }
-        for (int i = 0; i < msg.getNumberOfChildren(); i++) {
-            childPatients[i] = new TChildPatient(patientId++, (IEntranceHall_Patient) eth);
+        for (int i=0; i<msg.getNumberOfChildren(); i++) {
+            childPatients[i] = new TChildPatient(patientId++, msg.getTtm(), (IEntranceHall_Patient) eth, (IEvaluationHall_Patient) meh);
             childPatients[i].start();
         }
     }

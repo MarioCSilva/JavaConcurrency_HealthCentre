@@ -17,9 +17,7 @@ public class TCallCentre extends Thread {
 
     @Override
     public void run() {
-        while (true) {
-            cch.work(this);
-        }
+        cch.work(this);
     }
 
     public void callETHPatient() {

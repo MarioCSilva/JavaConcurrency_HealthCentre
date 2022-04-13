@@ -8,7 +8,7 @@ import javax.swing.*;
 public class Main {
     public static void main(String[] args){
         final String HCHostName = "localhost";
-        final int HCPort = 8001;
+        final int HCPort = 8080;
 
         Client client = new Client(HCHostName,HCPort);
         client.start();

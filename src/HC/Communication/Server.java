@@ -2,9 +2,9 @@ package HC.Communication;
 
 
 import HC.Entities.TClientHandler;
-import HC.Logger.ILog_ClientHandler;
 import HC.Logger.MLog;
 
+import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.net.ServerSocket;
@@ -16,11 +16,15 @@ public class Server {
     private ServerSocket serverSocket;
     private ObjectInputStream in = null;
     private ObjectOutputStream out = null;
-    private ILog_ClientHandler logger;
+    private MLog logger;
 
     public Server(int port) {
         this.port = port;
-        this.logger = (ILog_ClientHandler) new MLog();
+        try {
+			this.logger = new MLog();
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
     }
 
     public void start() {

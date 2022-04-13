@@ -40,6 +40,12 @@ public class GUI extends JPanel {
         resumeButton.setEnabled(false);
         suspendButton.setEnabled(false);
         stopButton.setEnabled(false);
+        numberOfAdultsSpinner.setValue(5);
+        numberOfChildrenSpinner.setValue(5);
+        numberOfSeats.setValue(4);
+        EVT.setValue(100);
+        TTM.setValue(100);
+
         startButton.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
