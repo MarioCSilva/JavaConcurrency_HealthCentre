@@ -109,11 +109,12 @@ public class MFIFO implements IFIFO {
             count++;
 
             cch.notifyETHEntrance();
+
+            bExit[ idx ] = false;
             // stay blocked on fifo since it has entered
             while ( !bExit[ idx ] )
                 cArray[ idx ].await();
 
-            bExit[ idx ] = false;
         } catch ( InterruptedException ex ) {}
         finally {
             rl.unlock();
@@ -125,10 +126,13 @@ public class MFIFO implements IFIFO {
         try{
             rl.lock();
 
-            while ( isEmpty() )
+            while ( isEmpty() ) {
+                System.out.println(String.format("%d PRESOSOSDAODOASODSAODOASDOSAODOASDSA", count));
                 cNotEmpty.await();
+            }
+            System.out.println("NOPEPEPEPEPEWPQEPWQPEPQWPEQW");
 
-            idxGet = idxGet % size;
+            // idxGet = idxGet % size;
 
             if ( isFull() )
                 cNotFull.signal();
@@ -138,9 +142,11 @@ public class MFIFO implements IFIFO {
             if (useCond) {
                 bExit[ idxGet ] = true;
                 cArray[ idxGet ].signal();
+                fifo [ idxGet ] = null;
             }
-            
-            idxGet++;
+
+            idxGet = ++idxGet % size;
+
         } catch( InterruptedException ex ) {}
         finally {
             rl.unlock();
@@ -181,7 +187,7 @@ public class MFIFO implements IFIFO {
     }
 
     public TPatient getHead() {
-        return fifo[ idxGet % size ];
+        return fifo[idxGet];
     }
 
     private boolean isFull() {

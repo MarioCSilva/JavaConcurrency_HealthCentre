@@ -61,10 +61,14 @@ public class MCallCentreHall implements ICallCentreHall_EntranceHall,
 
     public void work(TCallCentre cc) {
         while (true) {
+            int numToCall = 0;
+            System.out.println("Last seen here6");
+
             try {
                 lock1.lock();
 
                 this.bAwakeCC = false;
+                System.out.println("Last seen here5");
 
                 while (!this.bAwakeCC)
                     this.cAwakeCC.await();
@@ -73,13 +77,11 @@ public class MCallCentreHall implements ICallCentreHall_EntranceHall,
                         String.format("Current EVHPatients %d, Current ETHPatients %d", EVHNumPatients, ETHNumPatients));
 
                 int freeSpaces = maxEVH - EVHNumPatients;
-                int numToCall = freeSpaces <= ETHNumPatients ? freeSpaces : ETHNumPatients;
+                numToCall = freeSpaces <= ETHNumPatients ? freeSpaces : ETHNumPatients;
                 System.out.println(String.format("Number to Call %d", numToCall));
+                System.out.println("Last seen here4");
 
                 if (EVHNumPatients < maxEVH && ETHNumPatients > 0) {
-                    for (int i = 0; i<numToCall; i++)
-                        cc.callETHPatient();
-                        
                     this.ETHNumPatients -= numToCall;
                     this.EVHNumPatients += numToCall;
                 }
@@ -88,6 +90,12 @@ public class MCallCentreHall implements ICallCentreHall_EntranceHall,
             } finally {
                 System.out.println("merda3");
                 lock1.unlock();
+            }
+
+            for (int i = 0; i<numToCall; i++) {
+                System.out.println("Last seen here0");
+                cc.callETHPatient();
+                System.out.println("Last seen done allala");
             }
         }
     }
