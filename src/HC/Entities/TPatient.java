@@ -13,6 +13,7 @@ public class TPatient extends Thread {
     private final IEvaluationHall_Patient mEvaluationHall;
     private final boolean isAdult;
     private Integer ETN;
+    private Integer WTN;
     private DoS dos;
     private int ttm;
 
@@ -63,6 +64,13 @@ public class TPatient extends Thread {
 
     public Integer getETN() {
         return this.ETN;
+    }
+
+    public Integer getWTN() {
+        return WTN;
+    }
+    public void setWTN(Integer WTN) {
+        this.WTN = WTN;
     }
 
     public void setDoS(DoS dos) {
