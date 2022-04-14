@@ -30,7 +30,7 @@ public class MWaitingHall implements IWaitingHall_CallCenter, IWaitingHall_Patie
         this.WTR2_FIFOs = new MFIFO[NUM_FIFOS];
         for(int i =0; i< NUM_FIFOS; i++){
             WTR1_FIFOs[i] = new MFIFO(nos);
-            WTR2_FIFOs[2] = new MFIFO(nos);
+            WTR2_FIFOs[i] = new MFIFO(nos);
         }
     }
 
@@ -42,37 +42,26 @@ public class MWaitingHall implements IWaitingHall_CallCenter, IWaitingHall_Patie
         } finally {
             entranceLock.unlock();
         }
+
         logger.writePatient(patient, "WTH");
         //TODO: Notify Call Center
-        if(patient.getDoS() == DoS.RED){
-            if(patient.getIsAdult()){
-                logger.writePatient(patient,"WTR2");
-                WTR2_FIFOs[0].put(patient);
-            }
-            else{
-                logger.writePatient(patient,"WTR1");
-                WTR1_FIFOs[0].put(patient);
-            }
+
+        MFIFO[] patientFIFOs;
+
+        if (patient.getIsAdult()) {
+            patientFIFOs = WTR2_FIFOs;
+            logger.writePatient(patient,"WTR2");
+        } else {
+            patientFIFOs = WTR1_FIFOs;
+            logger.writePatient(patient,"WTR1");
         }
-        else if(patient.getDoS() == DoS.YELLOW){
-            if(patient.getIsAdult()){
-                logger.writePatient(patient,"WTR2");
-                WTR2_FIFOs[1].put(patient);
-            }
-            else{
-                logger.writePatient(patient,"WTR1");
-                WTR1_FIFOs[1].put(patient);
-            }
-        }
-        else if(patient.getDoS() == DoS.BLUE){
-            if(patient.getIsAdult()){
-                logger.writePatient(patient,"WTR2");
-                WTR2_FIFOs[1].put(patient);
-            }
-            else{
-                logger.writePatient(patient,"WTR1");
-                WTR1_FIFOs[1].put(patient);
-            }
+
+        if(patient.getDoS() == DoS.RED) {
+            patientFIFOs[0].put(patient);
+        } else if(patient.getDoS() == DoS.YELLOW) {
+            patientFIFOs[1].put(patient);
+        } else if(patient.getDoS() == DoS.BLUE) {
+            patientFIFOs[2].put(patient);
         }
     }
 
