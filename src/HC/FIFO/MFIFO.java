@@ -2,7 +2,7 @@ package HC.FIFO;
 
 import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.ReentrantLock;
-import HC.CallCentreHall.ICallCentreHall_EntranceHall;
+
 import HC.Entities.TPatient;
 
 public class MFIFO implements IFIFO {
@@ -86,10 +86,10 @@ public class MFIFO implements IFIFO {
         }
     }
 
-    
-    public void put(TPatient patient, ICallCentreHall_EntranceHall cch) {
+
+    public void put(TPatient patient, String hall, String room) {
         int idx;
-        
+
         try {
             rl.lock();
             // wait while fifo is full
@@ -108,7 +108,8 @@ public class MFIFO implements IFIFO {
             // increase count
             count++;
 
-            cch.notifyETHEntrance();
+            patient.log(room);
+            patient.notifyEntrance(hall);
 
             bExit[ idx ] = false;
             // stay blocked on fifo since it has entered
@@ -142,8 +143,9 @@ public class MFIFO implements IFIFO {
             if (useCond) {
                 bExit[ idxGet ] = true;
                 cArray[ idxGet ].signal();
-                fifo [ idxGet ] = null;
             }
+
+            fifo [ idxGet ] = null;
 
             idxGet = ++idxGet % size;
 

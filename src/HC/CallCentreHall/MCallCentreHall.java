@@ -5,9 +5,8 @@ import HC.Entities.TCallCentre;
 import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.ReentrantLock;
 
-public class MCallCentreHall implements ICallCentreHall_EntranceHall,
-        ICallCentreHall_CallCentre,
-        ICallCentreHall_EvaluationHall {
+public class MCallCentreHall implements ICallCentreHall_Patient,
+        ICallCentreHall_CallCentre {
     private int ETHNumPatients;
     private int EVHNumPatients;
     private ReentrantLock lock1;
@@ -25,11 +24,14 @@ public class MCallCentreHall implements ICallCentreHall_EntranceHall,
         this.bAwakeCC = false;
     }
 
-    public void notifyETHEntrance() {
+    public void notifyEntrance(String hall) {
         try {
             lock1.lock();
 
-            this.ETHNumPatients++;
+            if ( hall.equals("ETH") )
+                this.ETHNumPatients++;
+            else
+                this.EVHNumPatients++;
 
             this.cAwakeCC.signal();
             this.bAwakeCC = true;
@@ -82,11 +84,6 @@ public class MCallCentreHall implements ICallCentreHall_EntranceHall,
                 System.out.println("Last seen here4");
 
                 if (EVHNumPatients < maxEVH && ETHNumPatients > 0) {
-                    // pode tar aqui pq o fifo do eth nnc deve ficar vazio qnd isto é chamado
-                    // e entao n deve ficar await
-                    // mas se der mal é meter isto fora deste lock
-                    for (int i = 0; i<numToCall; i++)
-                        cc.callETHPatient();
                     this.ETHNumPatients -= numToCall;
                     this.EVHNumPatients += numToCall;
                 }
@@ -96,6 +93,9 @@ public class MCallCentreHall implements ICallCentreHall_EntranceHall,
                 System.out.println("merda3");
                 lock1.unlock();
             }
+
+            for (int i = 0; i<numToCall; i++)
+                cc.callETHPatient();
         }
     }
 }

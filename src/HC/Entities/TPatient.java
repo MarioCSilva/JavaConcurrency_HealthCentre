@@ -6,21 +6,31 @@ import java.util.Random;
 
 import HC.EntranceHall.IEntranceHall_Patient;
 import HC.EvaluationHall.IEvaluationHall_Patient;
+import HC.CallCentreHall.ICallCentreHall_Patient;
+import HC.Logger.ILog_Patient;
+import HC.WaitingHall.IWaitingHall_Patient;
 
 public class TPatient extends Thread {
     private final int patientId;
     private final IEntranceHall_Patient mEntranceHall;
     private final IEvaluationHall_Patient mEvaluationHall;
+    private final ICallCentreHall_Patient mCallCentreHall;
+    private final IWaitingHall_Patient mWaitingHall;
     private final boolean isAdult;
     private Integer ETN;
     private Integer WTN;
     private DoS dos;
     private int ttm;
+    private final ILog_Patient logger;
 
-    public TPatient(int patientId, int ttm, boolean isAdult, IEntranceHall_Patient mEntranceHall, IEvaluationHall_Patient mEvaluationHall) {
+    public TPatient(int patientId, int ttm, boolean isAdult, ILog_Patient logger, ICallCentreHall_Patient mCallCentreHall,
+                    IEntranceHall_Patient mEntranceHall, IEvaluationHall_Patient mEvaluationHall, IWaitingHall_Patient mWaitingHall) {
         this.patientId = patientId;
+        this.logger = logger;
         this.mEntranceHall = mEntranceHall;
         this.mEvaluationHall = mEvaluationHall;
+        this.mCallCentreHall = mCallCentreHall;
+        this.mWaitingHall = mWaitingHall;
         this.isAdult = isAdult;
         this.ttm = ttm;
     }
@@ -40,13 +50,30 @@ public class TPatient extends Thread {
         this.mEvaluationHall.enterHall(this);
 
         tSleep();
+
+        // enter the WTH
+        this.mWaitingHall.enterHall(this);
+    }
+
+    public void log(String room) {
+        logger.writePatient(this, room);
+    }
+
+    public void notifyEntrance(String hall) {
+        mCallCentreHall.notifyEntrance(hall);
+    }
+
+    public void notifyExit() {
+        mCallCentreHall.notifyEVHExit();
     }
 
     public void tSleep() {
-        try {
-            Thread.sleep(new Random().nextInt(ttm));
-        } catch (InterruptedException e) {
-            e.printStackTrace();
+        if (ttm > 0) {
+            try {
+                Thread.sleep(new Random().nextInt(ttm));
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
         }
     }
 
@@ -86,6 +113,6 @@ public class TPatient extends Thread {
         String adultStr = this.isAdult ? "A" : "C"; 
         String etnStr = this.getETN() == null ? "" : String.valueOf(this.getETN());
         String dosStr = this.getDoS() == null ? "" : this.getDoS().toString().substring(0, 1);
-        return String.format("%s%s0%d%s", etnStr, adultStr, patientId, dosStr);
+        return String.format("%s0%s%s", adultStr, etnStr, dosStr);
     }
 }

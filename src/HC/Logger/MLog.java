@@ -12,7 +12,7 @@ import java.util.concurrent.locks.ReentrantLock;
 
 import HC.Entities.TPatient;
 
-public class MLog implements ILog_ClientHandler, ILog_EntranceHall, ILog_EvaluationHall {
+public class MLog implements ILog_ClientHandler, ILog_Patient {
     private ReentrantLock rl;
     private final BufferedWriter logFile;
     private final Condition cFileWrite;
@@ -26,7 +26,7 @@ public class MLog implements ILog_ClientHandler, ILog_EntranceHall, ILog_Evaluat
         this.rl = new ReentrantLock();
         this.cFileWrite = rl.newCondition();
         this.headers = new ArrayList<>(Arrays.asList("STT", "ETH", "ET1", "ET2", "EVR1", "EVR2",
-            "EVR3", "EVR4", "WTR1", "WTR2", "MDH", "MDR1", "MDR2", "MDR3", "MDR4", "PYH", "OUT"));
+            "EVR3", "EVR4", "WTH", "WTR1", "WTR2", "MDH", "MDR1", "MDR2", "MDR3", "MDR4", "PYH", "OUT"));
     }
 
     public void writeHeaders() {

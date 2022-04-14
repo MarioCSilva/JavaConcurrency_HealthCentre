@@ -1,34 +1,43 @@
 package HC.EvaluationHall;
 
-import HC.CallCentreHall.ICallCentreHall_EvaluationHall;
-import HC.Entities.Nurse;
+import HC.Entities.TNurse;
 import HC.Entities.TPatient;
 
 import HC.FIFO.MFIFO;
-import HC.Logger.ILog_EvaluationHall;
 
+import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.ReentrantLock;
 
-public class MEvaluationHall implements IEvaluationHall_Patient {
+public class MEvaluationHall implements IEvaluationHall_Patient, IEvaluationHall_Nurse {
     private final MFIFO EVRFifos[];
-    private final Nurse EVRNurses[];
     private final ReentrantLock entranceLock;
+    private final ReentrantLock nurseLock;
+    private final Condition cPatient[];
+    private final Condition cNurse[];
+    private final boolean bNurse[];
+    private final boolean bPatient[];
     private final int nRooms = 4;
-    private final ICallCentreHall_EvaluationHall cch;
-    private final ILog_EvaluationHall logger;
     private final int nos;
 
 
-    public MEvaluationHall(ILog_EvaluationHall logger, int nos, int EVT, ICallCentreHall_EvaluationHall cch) {
-        this.logger = logger;
-        this.cch = cch;
+    public MEvaluationHall(int nos, int EVT) {
         this.entranceLock = new ReentrantLock();
+        this.nurseLock = new ReentrantLock();
         this.EVRFifos = new MFIFO[nRooms];
-        this.EVRNurses = new Nurse[nRooms];
+
+        this.cNurse = new Condition[nRooms];
+        this.cPatient = new Condition[nRooms];
+        this.bPatient = new boolean[nRooms];
+        this.bNurse = new boolean[nRooms];
+
         this.nos = nos;
+
         for (int i=0; i<nRooms; i++){
+            cNurse[i] = nurseLock.newCondition();
+            cPatient[i] = nurseLock.newCondition();
+            bPatient[i] = false;
+            bNurse[i] = false;
             this.EVRFifos[i] = new MFIFO(nos, false);
-            this.EVRNurses[i] = new Nurse(EVT);
         }
     }
 
@@ -49,28 +58,65 @@ public class MEvaluationHall implements IEvaluationHall_Patient {
             entranceLock.unlock();
         }
 
-        System.out.println(String.format("entrou no EVR%d %s", chosenEVR+1, patient));
 
-        logger.writePatient(patient, String.format("EVR%d", chosenEVR+1));
+        System.out.println(String.format("entrou no EVR%d %s", chosenEVR+1, patient));
+        patient.log(String.format("EVR%d", chosenEVR+1));
+
 
         EVRFifos[chosenEVR].put(patient);
-
         System.out.println(String.format("saiu do fifo %s", patient));
 
-        EVRNurses[chosenEVR].evaluate(patient);
+        try {
+            nurseLock.lock();
 
-        System.out.println(String.format("avaliado %s",patient));
-        
-        logger.writePatient(patient, String.format("EVR%d", chosenEVR+1));
+            bNurse[chosenEVR] = true;
+            cNurse[chosenEVR].signal();
 
-        exitHall(patient, EVRFifos[chosenEVR]);
+            bPatient[chosenEVR] = false;
+            while ( !bPatient[chosenEVR] )
+                cPatient[chosenEVR].await();
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        } finally {
+            nurseLock.unlock();
+        }
+
+        patient.log(String.format("EVR%d", chosenEVR+1));
+
+        exitHall(patient);
     }
 
-    public void exitHall(TPatient patient, MFIFO EVRFifo) {
-        EVRFifo.getPatient(patient);
+
+    public void work(TNurse nurse) {
+        int roomId = nurse.getRoomId();
+        while (true) {
+            try {
+                nurseLock.lock();
+
+                bNurse[roomId] = false;
+                while ( !bNurse[roomId] )
+                    cNurse[roomId].await();
+
+                TPatient patient = EVRFifos[roomId].getHead();
+
+                nurse.evaluate( patient );
+
+                EVRFifos[roomId].get();
+
+                bPatient[roomId] = true;
+                cPatient[roomId].signal();
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            } finally {
+                nurseLock.unlock();
+            }
+        }
+    }
+
+
+    public void exitHall(TPatient patient) {
+        patient.notifyExit();
 
         System.out.println(String.format("saiu do evh %s", patient));
-
-        cch.notifyEVHExit();
     }
 }

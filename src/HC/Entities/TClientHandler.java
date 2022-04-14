@@ -1,20 +1,18 @@
 package HC.Entities;
 
-import HC.CallCentreHall.ICallCentreHall_CallCentre;
-import HC.CallCentreHall.ICallCentreHall_EntranceHall;
-import HC.CallCentreHall.ICallCentreHall_EvaluationHall;
-import HC.CallCentreHall.MCallCentreHall;
+import HC.CallCentreHall.*;
 import HC.Communication.Message;
 import HC.EntranceHall.IEntranceHall_CallCenter;
 import HC.EntranceHall.IEntranceHall_Patient;
 import HC.EntranceHall.MEntranceHall;
 import HC.Enumerates.MessageTopic;
+import HC.EvaluationHall.IEvaluationHall_Nurse;
 import HC.EvaluationHall.IEvaluationHall_Patient;
 import HC.EvaluationHall.MEvaluationHall;
-import HC.Logger.ILog_ClientHandler;
-import HC.Logger.ILog_EntranceHall;
-import HC.Logger.ILog_EvaluationHall;
-import HC.Logger.MLog;
+import HC.FIFO.MFIFO;
+import HC.Logger.*;
+import HC.WaitingHall.IWaitingHall_Patient;
+import HC.WaitingHall.MWaitingHall;
 
 import java.io.*;
 import java.net.Socket;
@@ -26,6 +24,7 @@ public class TClientHandler implements Runnable {
     private MCallCentreHall cch;
     private MEntranceHall eth;
     private MEvaluationHall meh;
+    private MWaitingHall wwh;
     private TAdultPatient adultPatients[];
     private TChildPatient childPatients[];
     private TCallCentre cc;
@@ -46,22 +45,31 @@ public class TClientHandler implements Runnable {
 
         // initiate monitors
         cch = new MCallCentreHall(msg.getNos());
-        eth = new MEntranceHall((ILog_EntranceHall) defaultLogger, (int) msg.getNos()/2, (ICallCentreHall_EntranceHall) cch);
-        meh = new MEvaluationHall((ILog_EvaluationHall) defaultLogger, msg.getNos(), msg.getEvt(), (ICallCentreHall_EvaluationHall) cch);
+        eth = new MEntranceHall(msg.getNos());
+        meh = new MEvaluationHall(msg.getNos(), msg.getEvt());
+        wwh = new MWaitingHall(msg.getNos());
+
         // initiate entities
         cc = new TCallCentre((IEntranceHall_CallCenter) eth, (ICallCentreHall_CallCentre) cch);
-
         clientLogger.writeState("RUN");
         cc.start();
+        for (int i=0; i<4; i++){
+            TNurse nurse = new TNurse(msg.getEvt(), i, (IEvaluationHall_Nurse) meh);
+            nurse.start();
+        }
         adultPatients = new TAdultPatient[msg.getNumberOfAdults()];
         childPatients = new TChildPatient[msg.getNumberOfChildren()];
         int patientId = 0;
         for(int i=0; i<msg.getNumberOfAdults(); i++) {
-            adultPatients[i] = new TAdultPatient(patientId++, msg.getTtm(), (IEntranceHall_Patient) eth, (IEvaluationHall_Patient) meh);
+            adultPatients[i] = new TAdultPatient(patientId++, msg.getTtm(), (ILog_Patient) defaultLogger,
+                    (ICallCentreHall_Patient) cch, (IEntranceHall_Patient) eth, (IEvaluationHall_Patient) meh,
+                    (IWaitingHall_Patient) wwh);
             adultPatients[i].start();
         }
         for (int i=0; i<msg.getNumberOfChildren(); i++) {
-            childPatients[i] = new TChildPatient(patientId++, msg.getTtm(), (IEntranceHall_Patient) eth, (IEvaluationHall_Patient) meh);
+            childPatients[i] = new TChildPatient(patientId++, msg.getTtm(), (ILog_Patient) defaultLogger,
+                    (ICallCentreHall_Patient) cch, (IEntranceHall_Patient) eth, (IEvaluationHall_Patient) meh,
+                    (IWaitingHall_Patient) wwh);
             childPatients[i].start();
         }
     }

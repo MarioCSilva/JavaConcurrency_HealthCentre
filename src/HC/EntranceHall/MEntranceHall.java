@@ -1,12 +1,9 @@
 package HC.EntranceHall;
 
 
-import HC.CallCentreHall.ICallCentreHall_EntranceHall;
 import HC.Entities.TPatient;
 import HC.FIFO.MFIFO;
-import HC.Logger.ILog_EntranceHall;
 
-import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.ReentrantLock;
 
 public class MEntranceHall implements IEntranceHall_CallCenter, IEntranceHall_Patient {
@@ -14,23 +11,14 @@ public class MEntranceHall implements IEntranceHall_CallCenter, IEntranceHall_Pa
     private final ReentrantLock exitLock;
     private final ReentrantLock ETNLock;
 
-    private final ICallCentreHall_EntranceHall cch;
-
-    private final ILog_EntranceHall logger;
-
     private final MFIFO ETR1_FIFO;
     private final MFIFO ETR2_FIFO;
-    private final int size;
 
-    public MEntranceHall(ILog_EntranceHall logger, int nos, ICallCentreHall_EntranceHall cch) {
-        this.logger = logger;
+    public MEntranceHall(int nos) {
         this.exitLock = new ReentrantLock();
         this.ETNLock = new ReentrantLock();
-        this.cch = cch;
-
-        this.size = nos;
-        this.ETR1_FIFO = new MFIFO( size );
-        this.ETR2_FIFO = new MFIFO( size );
+        this.ETR1_FIFO = new MFIFO( nos/2 );
+        this.ETR2_FIFO = new MFIFO( nos/2 );
     }
 
     public void enterHall(TPatient patient) {
@@ -43,15 +31,13 @@ public class MEntranceHall implements IEntranceHall_CallCenter, IEntranceHall_Pa
             ETNLock.unlock();
         }
 
-        logger.writePatient(patient, "ETH");
+        patient.log("ETH");
 
         // assign the patient to a room
         if (patient.getIsAdult()) {
-            logger.writePatient(patient, "ET2");
-            ETR2_FIFO.put(patient, cch);
+            ETR2_FIFO.put(patient, "ETH", "ET2");
         } else {
-            logger.writePatient(patient, "ET1");
-            ETR1_FIFO.put(patient, cch);
+            ETR1_FIFO.put(patient, "ETH", "ET1");
         }
     }
 
