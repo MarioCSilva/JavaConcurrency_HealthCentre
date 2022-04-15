@@ -9,84 +9,105 @@ public class MCallCentreHall implements ICallCentreHall_Patient,
         ICallCentreHall_CallCentre {
     private int ETHNumPatients;
     private int EVHNumPatients;
+    private int WTHNumPatients;
+    private int MDHNumPatients;
     private ReentrantLock lock1;
     private Condition cAwakeCC;
     private boolean bAwakeCC;
-    private final int nEVR = 4;
-    private final int maxEVH;
+    private final int maxSeatsEVR = 4;
+    private final int maxSeatsMDW = 2;
 
     public MCallCentreHall(int nos) {
-        this.maxEVH = nos * nEVR;
         this.ETHNumPatients = 0;
         this.EVHNumPatients = 0;
+        this.WTHNumPatients = 0;
+        this.MDHNumPatients = 0;
         this.lock1 = new ReentrantLock();
         this.cAwakeCC = lock1.newCondition();
         this.bAwakeCC = false;
     }
 
     public void notifyEntrance(String hall) {
-        try {
-            lock1.lock();
+        System.out.println(String.format("entrance to hall %s", hall));
+        lock1.lock();
 
-            if ( hall.equals("ETH") )
-                this.ETHNumPatients++;
-            else
-                this.EVHNumPatients++;
+        if ( hall.equals("ETH") )
+            this.ETHNumPatients++;
+        else
+            this.WTHNumPatients++;
 
-            this.cAwakeCC.signal();
-            this.bAwakeCC = true;
-        } catch (Exception e) {
-            System.out.println(e);
-        } finally {
-            System.out.println("merda1");
-            lock1.unlock();
-        }
+        this.cAwakeCC.signal();
+        this.bAwakeCC = true;
+        System.out.println(String.format("merda1 %s", hall));
+
+        lock1.unlock();
     }
 
-    public void notifyEVHExit() {
+    public void notifyExit(String hall) {
         System.out.println("XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX");
-        try {
-            lock1.lock();
+        lock1.lock();
 
+        if ( hall.equals("EVH") )
             this.EVHNumPatients--;
-
-            System.out.println("Call Center Acordado");
-            this.cAwakeCC.signal();
-            this.bAwakeCC = true;
-        } catch (Exception e) {
-            System.out.println(e);
-        } finally {
-            System.out.println("merda2");
-            lock1.unlock();
+        else {
+            this.MDHNumPatients--;
+            System.out.println(
+                String.format("asdasdsa WTHPatients %d, MDHPatients %d",
+                    WTHNumPatients, MDHNumPatients));
         }
+
+        System.out.println("Call Center Acordado");
+        this.cAwakeCC.signal();
+        this.bAwakeCC = true;
+        System.out.println("merda2");
+
+        lock1.unlock();
     }
 
     public void work(TCallCentre cc) {
         while (true) {
-            int numToCall = 0;
+            int numToCallETH = 0, numToCallWTH = 0, freeSpaces;
             System.out.println("Last seen here6");
 
             try {
                 lock1.lock();
 
-                this.bAwakeCC = false;
                 System.out.println("Last seen here5");
 
                 while (!this.bAwakeCC)
                     this.cAwakeCC.await();
 
+                this.bAwakeCC = false;
+
                 System.out.println(
-                        String.format("Current EVHPatients %d, Current ETHPatients %d", EVHNumPatients, ETHNumPatients));
+                        String.format("EVHPatients %d, ETHPatients %d, WTHPatients %d, MDHPatients %d",
+                            EVHNumPatients, ETHNumPatients, WTHNumPatients, MDHNumPatients));
 
-                int freeSpaces = maxEVH - EVHNumPatients;
-                numToCall = freeSpaces <= ETHNumPatients ? freeSpaces : ETHNumPatients;
-                System.out.println(String.format("Number to Call %d", numToCall));
-                System.out.println("Last seen here4");
+                freeSpaces = maxSeatsEVR - EVHNumPatients;
+                numToCallETH = freeSpaces <= ETHNumPatients ? freeSpaces : ETHNumPatients;
+                System.out.println(String.format("Number to Call ETH %d", numToCallETH));
 
-                if (EVHNumPatients < maxEVH && ETHNumPatients > 0) {
-                    this.ETHNumPatients -= numToCall;
-                    this.EVHNumPatients += numToCall;
-                }
+                if (EVHNumPatients < maxSeatsEVR && ETHNumPatients > 0) {
+                    for (int i = 0; i<numToCallETH; i++)
+                        cc.callETHPatient();
+                    ETHNumPatients -= numToCallETH;
+                    EVHNumPatients += numToCallETH;
+                } else
+                    numToCallETH = 0;
+
+                freeSpaces = maxSeatsMDW - MDHNumPatients;
+                numToCallWTH = freeSpaces <= WTHNumPatients ? freeSpaces : WTHNumPatients;
+                System.out.println(String.format("Number to Call WTH %d", numToCallWTH));
+
+                if (MDHNumPatients < maxSeatsMDW && WTHNumPatients > 0) {
+                    WTHNumPatients -= numToCallWTH;
+                    MDHNumPatients += numToCallWTH;
+                    System.out.println(
+                        String.format("WTHPatients %d, MDHPatients %d",
+                            WTHNumPatients, MDHNumPatients));
+                } else
+                    numToCallWTH = 0;
+
             } catch (Exception e) {
                 System.out.println(e);
             } finally {
@@ -94,8 +115,11 @@ public class MCallCentreHall implements ICallCentreHall_Patient,
                 lock1.unlock();
             }
 
-            for (int i = 0; i<numToCall; i++)
-                cc.callETHPatient();
+            // for (int i = 0; i<numToCallETH; i++)
+            //     cc.callETHPatient();
+            
+            for (int i = 0; i<numToCallWTH; i++)
+                cc.callWTHPatient();
         }
     }
 }

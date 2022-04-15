@@ -17,8 +17,7 @@ public class TPatient extends Thread {
     private final ICallCentreHall_Patient mCallCentreHall;
     private final IWaitingHall_Patient mWaitingHall;
     private final boolean isAdult;
-    private Integer ETN;
-    private Integer WTN;
+    private Integer TN;
     private DoS dos;
     private int ttm;
     private final ILog_Patient logger;
@@ -63,8 +62,8 @@ public class TPatient extends Thread {
         mCallCentreHall.notifyEntrance(hall);
     }
 
-    public void notifyExit() {
-        mCallCentreHall.notifyEVHExit();
+    public void notifyExit(String hall) {
+        mCallCentreHall.notifyExit(hall);
     }
 
     public void tSleep() {
@@ -85,20 +84,14 @@ public class TPatient extends Thread {
         return this.patientId;
     }
 
-    public void setETN(int ETN) {
-        this.ETN = ETN;
+    public void setTN(int TN) {
+        this.TN = TN;
     }
 
-    public Integer getETN() {
-        return this.ETN;
+    public Integer getTN() {
+        return this.TN;
     }
 
-    public Integer getWTN() {
-        return WTN;
-    }
-    public void setWTN(Integer WTN) {
-        this.WTN = WTN;
-    }
 
     public void setDoS(DoS dos) {
         this.dos = dos;
@@ -111,8 +104,8 @@ public class TPatient extends Thread {
     @Override
     public String toString() {
         String adultStr = this.isAdult ? "A" : "C"; 
-        String etnStr = this.getETN() == null ? "" : String.valueOf(this.getETN());
+        String tnStr = this.getTN() == null ? "" : String.valueOf(this.getTN());
         String dosStr = this.getDoS() == null ? "" : this.getDoS().toString().substring(0, 1);
-        return String.format("%s0%s%s", adultStr, etnStr, dosStr);
+        return String.format("%s0%s%s", adultStr, tnStr, dosStr);
     }
 }

@@ -51,139 +51,122 @@ public class MFIFO implements IFIFO {
         }
     }
 
-    @Override
-    public void put(TPatient patient) {
-        int idx;
+    // @Override
+    // public void put(TPatient patient) {
+    //     int idx;
         
-        try {
-            rl.lock();
-            // wait while fifo is full
-            while ( isFull() )
-                cNotFull.await();
+    //     try {
+    //         rl.lock();
+    //         // wait while fifo is full
+    //         while ( isFull() )
+    //             cNotFull.await();
 
-            idx = idxPut;
-            fifo[ idx ] = patient;
+    //         idx = idxPut;
+    //         fifo[ idx ] = patient;
 
-            idxPut = (++idxPut) % size;
+    //         idxPut = (++idxPut) % size;
 
-            // check if fifo was empty and send a signal if it was
-            if ( isEmpty() )
-                cNotEmpty.signal();
+    //         // check if fifo was empty and send a signal if it was
+    //         if ( isEmpty() )
+    //             cNotEmpty.signal();
 
-            // increase count
-            count++;
+    //         // increase count
+    //         count++;
 
-            if (useCond) {
-                // stay blocked on fifo since it has entered
-                while ( !bExit[ idx ] )
-                    cArray[ idx ].await();
+    //         if (useCond) {
+    //             // stay blocked on fifo since it has entered
+    //             while ( !bExit[ idx ] )
+    //                 cArray[ idx ].await();
 
-                bExit[ idx ] = false;
-            }
-        } catch ( InterruptedException ex ) {}
-        finally {
-            rl.unlock();
-        }
+    //             bExit[ idx ] = false;
+    //         }
+    //     } catch ( InterruptedException ex ) {}
+    //     finally {
+    //         rl.unlock();
+    //     }
+    // }
+
+    public void put(TPatient patient, int idx) {
+        fifo[ idx ] = patient;
     }
 
+    public int put(TPatient patient) {
+        // wait while fifo is full
+        // while ( isFull() )
+        //     cNotFull.await();
 
-    public void put(TPatient patient, String hall, String room) {
-        int idx;
+        int idx = idxPut;
+        fifo[ idx ] = patient;
+        idxPut = (++idxPut) % size;
+        return idx;
 
-        try {
-            rl.lock();
-            // wait while fifo is full
-            while ( isFull() )
-                cNotFull.await();
+        // check if fifo was empty and send a signal if it was
+        // if ( isEmpty() )
+        //     cNotEmpty.signal();
 
-            idx = idxPut;
-            fifo[ idx ] = patient;
 
-            idxPut = (++idxPut) % size;
+        // patient.log(room);
+        // patient.notifyEntrance(hall);
 
-            // check if fifo was empty and send a signal if it was
-            if ( isEmpty() )
-                cNotEmpty.signal();
+        // bExit[ idx ] = false;
+        // // stay blocked on fifo since it has entered
+        // while ( !bExit[ idx ] )
+        //     cArray[ idx ].await();
 
-            // increase count
-            count++;
-
-            patient.log(room);
-            patient.notifyEntrance(hall);
-
-            bExit[ idx ] = false;
-            // stay blocked on fifo since it has entered
-            while ( !bExit[ idx ] )
-                cArray[ idx ].await();
-
-        } catch ( InterruptedException ex ) {}
-        finally {
-            rl.unlock();
-        }
     }
-
+    
     @Override
-    public void get() {
-        try{
-            rl.lock();
+    public int get() {
+        // while ( isEmpty() ) {
+        //     System.out.println(String.format("%d PRESOSOSDAODOASODSAODOASDOSAODOASDSA", count));
+        //     cNotEmpty.await();
+        // }
 
-            while ( isEmpty() ) {
-                System.out.println(String.format("%d PRESOSOSDAODOASODSAODOASDOSAODOASDSA", count));
-                cNotEmpty.await();
-            }
-            System.out.println("NOPEPEPEPEPEWPQEPWQPEPQWPEQW");
+        // if ( isFull() )
+        //     cNotFull.signal();
 
-            // idxGet = idxGet % size;
+        // count--;
 
-            if ( isFull() )
-                cNotFull.signal();
+        // if (useCond) {
+        //     bExit[ idxGet ] = true;
+        //     cArray[ idxGet ].signal();
+        // }
 
-            count--;
+        int idx = idxGet;
 
-            if (useCond) {
-                bExit[ idxGet ] = true;
-                cArray[ idxGet ].signal();
-            }
+        fifo [ idx ] = null;
 
-            fifo [ idxGet ] = null;
+        idxGet = ++idxGet % size;
 
-            idxGet = ++idxGet % size;
-
-        } catch( InterruptedException ex ) {}
-        finally {
-            rl.unlock();
-        }
+        return idx;
     }
 
-    public void getPatient(TPatient patient) {
-        try{
-            rl.lock();
+    public int getPatient(TPatient patient) {
+        int idx = 0;
 
-            while ( isEmpty() )
-                cNotEmpty.await();
-
-            int getId = 0;
-            for (int i=0; i<fifo.length; i++) {
-                if (fifo[i] !=null && fifo[i].getPatientId() == patient.getPatientId()) {
-                    getId = i;
-                }
+        for (int i=0; i<size; i++) {
+            if (fifo[i] !=null && fifo[i].getPatientId() == patient.getPatientId()) {
+                idx = i;
+                break;
             }
-
-            if ( isFull() )
-                cNotFull.signal();
-
-            count --;
-
-            if (useCond) {
-                bExit[ getId ] = true;
-                cArray[ getId ].signal();
-            }
-        } catch( InterruptedException ex ) {}
-        finally {
-            rl.unlock();
         }
+
+        fifo [ idx ] = null;
+
+        return idx;
     }
 
+    public TPatient[] getFIFO() {
+        return fifo;
+    }
+
+    public void incCounter() {
+        count++;
+    }
+    
+    public void decCounter(){
+        count--;
+    }
     public int getCount() {
         return count;
     }
@@ -192,11 +175,15 @@ public class MFIFO implements IFIFO {
         return fifo[idxGet];
     }
 
-    private boolean isFull() {
+    public boolean isFull() {
         return count == size;
     }
 
-    private boolean isEmpty() {
+    public boolean isEmpty() {
         return count == 0;
+    }
+
+    public void getPatientById(int idx) {
+        fifo [ idx ] = null;
     }
 }
