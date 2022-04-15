@@ -61,6 +61,7 @@ public class MEntranceHall implements IEntranceHall_CallCentre, IEntranceHall_Pa
         boolean bExit[] = null;
         Condition cNotEmpty = null;
         Condition cNotFull = null;
+        int patientIdx = 0;
         
         if (patient.getIsAdult()) {
             room = "ET2";
@@ -81,9 +82,9 @@ public class MEntranceHall implements IEntranceHall_CallCentre, IEntranceHall_Pa
         // give an ETN to each patient upon entering ETH
 
         try {
-            System.out.println("Apanhei o lock antes 1");
-
             rl.lock();
+
+            System.out.println(String.format("Entrei no ETH========%s", patient));
     
             if (patient.getIsAdult())
                 patient.setTN(ETN2++);
@@ -93,42 +94,41 @@ public class MEntranceHall implements IEntranceHall_CallCentre, IEntranceHall_Pa
             patient.log("ETH");
     
             // wait while room is full
-            while (patientRoom.isFull())
+            while (patientRoom.isFull()) {
+                System.out.println(String.format("preso no ETH========%s, com %d", patient, patientRoom.getCount()));
                 cNotFull.await();
-    
-            // assign the patient to a room
-            patientRoom.put(patient, patient.getTN() % size);
+            }
 
-            // check if room was empty and send a signal if it was
-            // if ( patientRoom.isEmpty() )
-            //     cNotEmpty.signal();
+            System.out.println(String.format("fui colocado no ETH========%s", patient));
+
+            // assign the patient to a room
+            patientIdx = patientRoom.put(patient);
 
             // increase room counter
             patientRoom.incCounter();
+
         } catch (InterruptedException e) {
             e.printStackTrace();
         } finally {
-            System.out.println("libertei 1");
             rl.unlock();
         }
 
         patient.tSleep();
-        
+
+        patient.log(room);
+
         patient.notifyEntrance("ETH");
 
         try {
-            System.out.println("Apanhei o lock antes 2");
             rl.lock();
 
-            patient.log(room);
-            int idx = patient.getTN() % size;
             // stay blocked on room since it has entered
-            while ( !bExit[ idx ] )
-                cArray[ idx ].await();
+            while ( !bExit[ patientIdx ] )
+                cArray[ patientIdx ].await();
 
-            bExit[ idx ] = false;
+            bExit[ patientIdx ] = false;
 
-            patientRoom.getPatientById(idx);
+            patientRoom.getPatientById(patientIdx);
 
             if ( patientRoom.isFull() )
                 cNotFull.signal();
@@ -138,22 +138,23 @@ public class MEntranceHall implements IEntranceHall_CallCentre, IEntranceHall_Pa
         } catch (InterruptedException e) {
             e.printStackTrace();
         } finally {
-            System.out.println("libertei 2");
+            System.out.println(String.format("SAI DO ETH AGORA %s", patient));
             rl.unlock();
         }
     }
 
-    public TPatient getHighestPriorityPatient(MFIFO ETR, TPatient maxPriorityPatient) {
+    public List<Object> getHighestPriorityPatient(MFIFO ETR, List<Object> maxPriorityPatient) {
         for (int i=0; i<size; i++) {
             TPatient patient = ETR.getFIFO()[i];
-            if ( patient != null && ( maxPriorityPatient == null || (patient.getTN() < maxPriorityPatient.getTN()) ) )
-                maxPriorityPatient = patient;
+            TPatient priorityPatient = (TPatient) maxPriorityPatient.get(0);
+            if ( patient != null && ( priorityPatient == null || (patient.getTN() < priorityPatient.getTN()) ) )
+                maxPriorityPatient = Arrays.asList(patient, i);
         }
         return maxPriorityPatient;
     }
 
     public void exitHall() {
-        TPatient maxPriorityPatient = null;
+        List<Object> maxPriorityPatient = Arrays.asList(null, 0);
         System.out.println(maxPriorityPatient);
 
         rl.lock();
@@ -168,31 +169,24 @@ public class MEntranceHall implements IEntranceHall_CallCentre, IEntranceHall_Pa
 
         System.out.println(maxPriorityPatient);
 
-        if (maxPriorityPatient != null)
-            exitHall(maxPriorityPatient);
+        if (maxPriorityPatient.get(0) != null)
+            exitHall((TPatient) maxPriorityPatient.get(0), (int) maxPriorityPatient.get(1));
 
         rl.unlock();
     }
 
-    public void exitHall(TPatient patient) {
-        MFIFO patientRoom = null;
-        Condition cArray[] = null;
-        boolean bExit[] = null;
-        Condition cNotFull = null;
+    public void exitHall(TPatient patient, int idx) {
+        Condition cArray[];
+        boolean bExit[];
 
         if (patient.getIsAdult()) {
-            patientRoom = ETR2;
             cArray = cArrayETR2;
-            cNotFull = cNotFullETR2;
             bExit = bExitETR2;
         } else {
-            patientRoom = ETR1;
             cArray = cArrayETR1;
-            cNotFull = cNotFullETR1;
             bExit = bExitETR1;
         }
-        int idx = patient.getTN() % size;
-        
+
         bExit[ idx ] = true;
         cArray[ idx ].signal();
     }

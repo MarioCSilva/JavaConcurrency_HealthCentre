@@ -15,16 +15,13 @@ import HC.Entities.TPatient;
 public class MLog implements ILog_ClientHandler, ILog_Patient {
     private ReentrantLock rl;
     private final BufferedWriter logFile;
-    private final Condition cFileWrite;
     private final String fileName = "log.txt";
-    private boolean bFileWrite = false;
     private final List<String> headers;
 
     public MLog() throws IOException {
         new File(this.fileName);
         this.logFile = new BufferedWriter(new FileWriter(fileName));
         this.rl = new ReentrantLock();
-        this.cFileWrite = rl.newCondition();
         this.headers = new ArrayList<>(Arrays.asList("STT", "ETH", "ET1", "ET2", "EVR1", "EVR2",
             "EVR3", "EVR4", "WTH", "WTR1", "WTR2", "MDH", "MDR1", "MDR2", "MDR3", "MDR4", "PYH", "OUT"));
     }
@@ -50,23 +47,18 @@ public class MLog implements ILog_ClientHandler, ILog_Patient {
     }
 
     public void write(String message){
+        rl.lock();
+
+        System.out.println(message);
+
         try {
-            rl.lock();
-            while (this.bFileWrite) {
-                cFileWrite.await();
-            }
-            
-            this.bFileWrite = true;
-            System.out.println(message);
             this.logFile.write(message);
             this.logFile.newLine();
             this.logFile.flush();
-            this.cFileWrite.signal();
-            this.bFileWrite = false;
-        } catch (InterruptedException | IOException ex) {
-            return;
-        } finally {
-            rl.unlock();
+        } catch (IOException e) {
+            e.printStackTrace();
         }
+
+        rl.unlock();
     }
 }

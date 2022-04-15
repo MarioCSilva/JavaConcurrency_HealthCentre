@@ -91,28 +91,18 @@ public class MFIFO implements IFIFO {
     }
 
     public int put(TPatient patient) {
-        // wait while fifo is full
-        // while ( isFull() )
-        //     cNotFull.await();
-
-        int idx = idxPut;
-        fifo[ idx ] = patient;
-        idxPut = (++idxPut) % size;
-        return idx;
-
-        // check if fifo was empty and send a signal if it was
-        // if ( isEmpty() )
-        //     cNotEmpty.signal();
-
-
-        // patient.log(room);
-        // patient.notifyEntrance(hall);
-
-        // bExit[ idx ] = false;
-        // // stay blocked on fifo since it has entered
-        // while ( !bExit[ idx ] )
-        //     cArray[ idx ].await();
-
+        int i = 0;
+        for (i=0; i<size; i++) {
+            if (fifo[i] ==null) {
+                fifo[i] = patient;
+                break;
+            }
+        }
+        return i;
+        // int idx = idxPut;
+        // fifo[ idx ] = patient;
+        // idxPut = (++idxPut) % size;
+        // return idx;
     }
     
     @Override
@@ -187,3 +177,6 @@ public class MFIFO implements IFIFO {
         fifo [ idx ] = null;
     }
 }
+
+
+

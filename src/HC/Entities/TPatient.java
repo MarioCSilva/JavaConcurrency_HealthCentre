@@ -8,6 +8,7 @@ import HC.EntranceHall.IEntranceHall_Patient;
 import HC.EvaluationHall.IEvaluationHall_Patient;
 import HC.CallCentreHall.ICallCentreHall_Patient;
 import HC.Logger.ILog_Patient;
+import HC.MedicalHall.IMedicalHall_Patient;
 import HC.WaitingHall.IWaitingHall_Patient;
 
 public class TPatient extends Thread {
@@ -16,21 +17,27 @@ public class TPatient extends Thread {
     private final IEvaluationHall_Patient mEvaluationHall;
     private final ICallCentreHall_Patient mCallCentreHall;
     private final IWaitingHall_Patient mWaitingHall;
+    private final IMedicalHall_Patient mMedicalHall;
     private final boolean isAdult;
+    private final String patientType;
     private Integer TN;
     private DoS dos;
     private int ttm;
     private final ILog_Patient logger;
+    private int appointmentTime = 0;
 
     public TPatient(int patientId, int ttm, boolean isAdult, ILog_Patient logger, ICallCentreHall_Patient mCallCentreHall,
-                    IEntranceHall_Patient mEntranceHall, IEvaluationHall_Patient mEvaluationHall, IWaitingHall_Patient mWaitingHall) {
+                    IEntranceHall_Patient mEntranceHall, IEvaluationHall_Patient mEvaluationHall, IWaitingHall_Patient mWaitingHall,
+                    IMedicalHall_Patient mMedicalHall) {
         this.patientId = patientId;
         this.logger = logger;
         this.mEntranceHall = mEntranceHall;
         this.mEvaluationHall = mEvaluationHall;
         this.mCallCentreHall = mCallCentreHall;
         this.mWaitingHall = mWaitingHall;
+        this.mMedicalHall = mMedicalHall;
         this.isAdult = isAdult;
+        this.patientType = isAdult ? "A" : "C";
         this.ttm = ttm;
     }
 
@@ -52,6 +59,12 @@ public class TPatient extends Thread {
 
         // enter the WTH
         this.mWaitingHall.enterHall(this);
+
+        tSleep();
+
+        // enter the MDH
+        this.mMedicalHall.enterHall(this);
+
     }
 
     public void log(String room) {
@@ -59,11 +72,11 @@ public class TPatient extends Thread {
     }
 
     public void notifyEntrance(String hall) {
-        mCallCentreHall.notifyEntrance(hall);
+        mCallCentreHall.notifyEntrance(this, hall);
     }
 
     public void notifyExit(String hall) {
-        mCallCentreHall.notifyExit(hall);
+        mCallCentreHall.notifyExit(this, hall);
     }
 
     public void tSleep() {
@@ -78,6 +91,10 @@ public class TPatient extends Thread {
 
     public boolean getIsAdult(){
         return this.isAdult;
+    }
+
+    public String getPatientType(){
+        return this.patientType;
     }
 
     public int getPatientId() {
@@ -100,6 +117,10 @@ public class TPatient extends Thread {
     public DoS getDoS() {
         return this.dos;
     }
+    public void setAppointmentTime(int appointmentTime){
+        this.appointmentTime = appointmentTime;
+    }
+    
 
     @Override
     public String toString() {

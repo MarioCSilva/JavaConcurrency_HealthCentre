@@ -18,7 +18,7 @@ public class MEvaluationHall implements IEvaluationHall_Patient, IEvaluationHall
     private final boolean bNurse[];
     
 
-    public MEvaluationHall(int EVT) {
+    public MEvaluationHall() {
         this.rl = new ReentrantLock();
         this.rooms = new TPatient[nRooms];
 
@@ -60,9 +60,10 @@ public class MEvaluationHall implements IEvaluationHall_Patient, IEvaluationHall
             bNurse[chosenEVR] = true;
             cNurse[chosenEVR].signal();
 
-            bPatient[chosenEVR] = false;
             while ( !bPatient[chosenEVR] )
                 cPatient[chosenEVR].await();
+
+            bPatient[chosenEVR] = false;
 
             rooms[chosenEVR] = null;
 
@@ -72,7 +73,8 @@ public class MEvaluationHall implements IEvaluationHall_Patient, IEvaluationHall
             rl.unlock();
         }
 
-        exitHall(patient);
+        patient.notifyExit("EVH");
+        System.out.println(String.format("saiu do evh %s", patient));
     }
 
 
@@ -107,10 +109,5 @@ public class MEvaluationHall implements IEvaluationHall_Patient, IEvaluationHall
             }
 
         }
-    }
-    
-    public void exitHall(TPatient patient) {
-        patient.notifyExit("EVH");
-        System.out.println(String.format("saiu do evh %s", patient));
     }
 }

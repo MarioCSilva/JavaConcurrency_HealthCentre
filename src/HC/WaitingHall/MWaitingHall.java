@@ -58,6 +58,8 @@ public class MWaitingHall implements IWaitingHall_CallCentre, IWaitingHall_Patie
         boolean bExit[] = null;
         Condition cNotEmpty = null;
         Condition cNotFull = null;
+        int patientIdx = 0;
+
 
         if (patient.getIsAdult()) {
             room = "WTR2";
@@ -74,44 +76,50 @@ public class MWaitingHall implements IWaitingHall_CallCentre, IWaitingHall_Patie
             cNotFull = cNotFullWTR1;
             bExit = bExitWTR1;
         }
-
-        rl.lock();
-
-        patient.setTN(WTN);
-        WTN++;
-
-        patient.log("WTH");
-
-        rl.unlock();
-
-        patient.tSleep();
-
         try {
             rl.lock();
 
+            patient.setTN(WTN++);
+
+            patient.log("WTH");
+
             // wait while fifo is full
             while (patientRoom.isFull())
-                cNotFull.await();   
+                cNotFull.await();
 
             // assign the patient to a room
-            int patientIdx = patientRoom.put(patient);
-
-            // check if fifo was empty and send a signal if it was
-            if ( patientRoom.isEmpty() )
-                cNotEmpty.signal();
+            patientIdx = patientRoom.put(patient);
 
             // increase fifo counter
             patientRoom.incCounter();
 
-            patient.log(room);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        } finally {
+            rl.unlock();
+        }
 
-            patient.notifyEntrance("WTH");
+        patient.tSleep();
+
+        patient.log(room);
+
+        patient.notifyEntrance("WTH");
+
+        try {
+            rl.lock();
 
             // stay blocked on fifo since it has entered
             while ( !bExit[ patientIdx ] )
                 cArray[ patientIdx ].await();
 
             bExit[ patientIdx ] = false;
+
+            patientRoom.getPatientById(patientIdx);
+
+            if ( patientRoom.isFull() )
+                cNotFull.signal();
+
+            patientRoom.decCounter();
 
         } catch (InterruptedException e) {
             e.printStackTrace();
@@ -131,47 +139,31 @@ public class MWaitingHall implements IWaitingHall_CallCentre, IWaitingHall_Patie
         return maxPriorityPatient;
     }
 
-    public void exitHall() {
+    public void exitHall(String patientType) {
         List<Object> maxPriorityPatient = Arrays.asList(null, 0);
+        Condition cArray[];
+        boolean bExit[];
 
         rl.lock();
 
-        maxPriorityPatient = getHighestPriorityPatient(this.WTR1, maxPriorityPatient);
-        maxPriorityPatient = getHighestPriorityPatient(this.WTR2, maxPriorityPatient);
-        System.out.println(maxPriorityPatient);
-
-        if (maxPriorityPatient.get(0) != null)
-            exitHall((TPatient) maxPriorityPatient.get(0), (int) maxPriorityPatient.get(1));
-
-        rl.unlock();
-    }
-
-    public void exitHall(TPatient patient, int idx) {
-        MFIFO patientWTR = null;
-        Condition cArray[] = null;
-        boolean bExit[] = null;
-        Condition cNotFull = null;
-
-        if (patient.getIsAdult()) {
-            patientWTR = WTR2;
-            cArray = cArrayWTR2;
-            cNotFull = cNotFullWTR2;
-            bExit = bExitWTR2;
-        } else {
-            patientWTR = WTR1;
+        if ( patientType.equals("C") ) {
+            maxPriorityPatient = getHighestPriorityPatient(this.WTR1, maxPriorityPatient);
             cArray = cArrayWTR1;
-            cNotFull = cNotFullWTR1;
             bExit = bExitWTR1;
         }
+        else {
+            maxPriorityPatient = getHighestPriorityPatient(this.WTR2, maxPriorityPatient);
+            cArray = cArrayWTR2;
+            bExit = bExitWTR2;
+        }
 
-        if ( patientWTR.isFull() )
-            cNotFull.signal();
+        int idx = (int) maxPriorityPatient.get(1);
+        
+        if (maxPriorityPatient.get(0) != null) {
+            bExit[idx] = true;
+            cArray[idx].signal();
+        }
 
-        patientWTR.decCounter();
-
-        patientWTR.getPatientById(idx);
-
-        bExit[ idx ] = true;
-        cArray[ idx ].signal();
+        rl.unlock();
     }
 }

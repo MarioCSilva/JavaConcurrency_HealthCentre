@@ -1,5 +1,5 @@
 package HC.WaitingHall;
 
 public interface IWaitingHall_CallCentre {
-    void exitHall();
+    void exitHall(String patientType);
 }
