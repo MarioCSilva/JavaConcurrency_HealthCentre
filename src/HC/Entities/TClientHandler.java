@@ -15,6 +15,9 @@ import HC.MedicalHall.IMedicalHall_CallCentre;
 import HC.MedicalHall.IMedicalHall_Doctor;
 import HC.MedicalHall.IMedicalHall_Patient;
 import HC.MedicalHall.MMedicalHall;
+import HC.PaymentHall.IPaymentHall_Cashier;
+import HC.PaymentHall.IPaymentHall_Patient;
+import HC.PaymentHall.MPaymentHall;
 import HC.WaitingHall.IWaitingHall_CallCentre;
 import HC.WaitingHall.IWaitingHall_Patient;
 import HC.WaitingHall.MWaitingHall;
@@ -31,6 +34,7 @@ public class TClientHandler implements Runnable {
     private MEvaluationHall meh;
     private MWaitingHall wth;
     private MMedicalHall mdh;
+    private MPaymentHall pyh;
     private TAdultPatient adultPatients[];
     private TChildPatient childPatients[];
     private TCallCentre cc;
@@ -55,13 +59,15 @@ public class TClientHandler implements Runnable {
         meh = new MEvaluationHall();
         wth = new MWaitingHall(msg.getNos());
         mdh = new MMedicalHall();
-
+        pyh = new MPaymentHall(msg.getNos());
 
         // initiate entities
         cc = new TCallCentre((IEntranceHall_CallCentre) eth, (ICallCentreHall_CallCentre) cch,
                 (IWaitingHall_CallCentre) wth, (IMedicalHall_CallCentre) mdh);
         clientLogger.writeState("RUN");
         cc.start();
+        TCashier cashier = new TCashier(msg.getPyt(), (IPaymentHall_Cashier) pyh);
+        cashier.start();
         for (int i=0; i<4; i++){
             TDoctor doctor = new TDoctor(msg.getMdt(), i, (IMedicalHall_Doctor) mdh);
             doctor.start();
@@ -74,13 +80,13 @@ public class TClientHandler implements Runnable {
         for(int i=0; i<msg.getNumberOfAdults(); i++) {
             adultPatients[i] = new TAdultPatient(patientId++, msg.getTtm(), (ILog_Patient) defaultLogger,
                     (ICallCentreHall_Patient) cch, (IEntranceHall_Patient) eth, (IEvaluationHall_Patient) meh,
-                    (IWaitingHall_Patient) wth, (IMedicalHall_Patient) mdh);
+                    (IWaitingHall_Patient) wth, (IMedicalHall_Patient) mdh, (IPaymentHall_Patient) pyh);
             adultPatients[i].start();
         }
         for (int i=0; i<msg.getNumberOfChildren(); i++) {
             childPatients[i] = new TChildPatient(patientId++, msg.getTtm(), (ILog_Patient) defaultLogger,
                     (ICallCentreHall_Patient) cch, (IEntranceHall_Patient) eth, (IEvaluationHall_Patient) meh,
-                    (IWaitingHall_Patient) wth, (IMedicalHall_Patient) mdh);
+                    (IWaitingHall_Patient) wth, (IMedicalHall_Patient) mdh, (IPaymentHall_Patient) pyh);
             childPatients[i].start();
         }
     }

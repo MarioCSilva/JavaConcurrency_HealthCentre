@@ -22,7 +22,9 @@ public class MCallCentreHall implements ICallCentreHall_Patient,
     private Condition cAwakeCC;
     private boolean bAwakeCC;
     private final int maxSeatsEVR = 4;
-    private final int maxSeatsMDW = 2;
+    private final int maxSeatsMDW = 1;
+    private final int maxSeatsMDR = 2;
+
     private HashMap<String, Integer> hallPatients;
       
     public MCallCentreHall(int nos) {
@@ -102,13 +104,15 @@ public class MCallCentreHall implements ICallCentreHall_Patient,
                 // System.out.println(String.format("Number to Call ETH %d", numToCallETH));
                 // nPatientsETH -= numToCallETH;
                 // nPatientsEVH += numToCallETH;
-                
+
+                System.out.println(String.format("WTHA %d | WTHC %d | MDWHA %d | MDWC %d", hallPatients.get("WTHA"),
+                        hallPatients.get("WTHC"), hallPatients.get("MDWA"), hallPatients.get("MDWC")));
 
                 numToCallETH = updateNumPatients("ETH", "EVH", maxSeatsEVR);
                 numToCallWTHA = updateNumPatients("WTHA", "MDWA", maxSeatsMDW);
-                numToCallWTHC = updateNumPatients("WTHC", "MDWC", maxSeatsEVR);
-                numToCallMDWA = updateNumPatients("MDWA", "MDRA", maxSeatsMDW);                
-                numToCallMDWC = updateNumPatients("MDWC", "MDRC", maxSeatsEVR);
+                numToCallWTHC = updateNumPatients("WTHC", "MDWC", maxSeatsMDW);
+                numToCallMDWA = updateNumPatients("MDWA", "MDRA", maxSeatsMDR);                
+                numToCallMDWC = updateNumPatients("MDWC", "MDRC", maxSeatsMDR);
 
             } catch (Exception e) {
                 System.out.println(e);
@@ -136,6 +140,7 @@ public class MCallCentreHall implements ICallCentreHall_Patient,
         int numToCall = 0;
         int nToExit = hallPatients.get(hallToExit);
         int nToEnter = hallPatients.get(hallToEnter);
+
 
         int freeSpaces = maxSeatsHallToEnter - nToEnter;
         numToCall = freeSpaces <= nToExit ? freeSpaces : nToExit;

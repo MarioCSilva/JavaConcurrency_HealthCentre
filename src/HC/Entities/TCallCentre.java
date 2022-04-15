@@ -40,11 +40,11 @@ public class TCallCentre extends Thread {
     }
 
     public void callMDWAPatient() {
-        mdh.exitHall("A");
+        mdh.exitWaitingRoom("A");
     }
 
     public void callMDWCPatient() {
-        mdh.exitHall("C");
+        mdh.exitWaitingRoom("C");
     }
 
 }

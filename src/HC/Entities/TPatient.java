@@ -9,6 +9,7 @@ import HC.EvaluationHall.IEvaluationHall_Patient;
 import HC.CallCentreHall.ICallCentreHall_Patient;
 import HC.Logger.ILog_Patient;
 import HC.MedicalHall.IMedicalHall_Patient;
+import HC.PaymentHall.IPaymentHall_Patient;
 import HC.WaitingHall.IWaitingHall_Patient;
 
 public class TPatient extends Thread {
@@ -18,6 +19,7 @@ public class TPatient extends Thread {
     private final ICallCentreHall_Patient mCallCentreHall;
     private final IWaitingHall_Patient mWaitingHall;
     private final IMedicalHall_Patient mMedicalHall;
+    private final IPaymentHall_Patient mPaymentHall;
     private final boolean isAdult;
     private final String patientType;
     private Integer TN;
@@ -28,7 +30,7 @@ public class TPatient extends Thread {
 
     public TPatient(int patientId, int ttm, boolean isAdult, ILog_Patient logger, ICallCentreHall_Patient mCallCentreHall,
                     IEntranceHall_Patient mEntranceHall, IEvaluationHall_Patient mEvaluationHall, IWaitingHall_Patient mWaitingHall,
-                    IMedicalHall_Patient mMedicalHall) {
+                    IMedicalHall_Patient mMedicalHall, IPaymentHall_Patient mPaymentHall) {
         this.patientId = patientId;
         this.logger = logger;
         this.mEntranceHall = mEntranceHall;
@@ -36,6 +38,7 @@ public class TPatient extends Thread {
         this.mCallCentreHall = mCallCentreHall;
         this.mWaitingHall = mWaitingHall;
         this.mMedicalHall = mMedicalHall;
+        this.mPaymentHall = mPaymentHall;
         this.isAdult = isAdult;
         this.patientType = isAdult ? "A" : "C";
         this.ttm = ttm;
@@ -64,6 +67,11 @@ public class TPatient extends Thread {
 
         // enter the MDH
         this.mMedicalHall.enterHall(this);
+
+        tSleep();
+
+        // enter the MDH
+        this.mPaymentHall.enterHall(this);
 
     }
 

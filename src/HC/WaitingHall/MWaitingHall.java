@@ -10,7 +10,7 @@ import java.util.concurrent.locks.ReentrantLock;
 
 
 public class MWaitingHall implements IWaitingHall_CallCentre, IWaitingHall_Patient {
-    private int WTN = 0;
+    private int WTN = 1;
     private final int size;
 
     private final ReentrantLock rl;

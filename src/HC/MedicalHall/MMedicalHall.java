@@ -4,16 +4,10 @@ import HC.Entities.TDoctor;
 import HC.Entities.TPatient;
 import HC.FIFO.MFIFO;
 
-import java.util.Arrays;
-import java.util.List;
 import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.ReentrantLock;
 
 public class MMedicalHall implements IMedicalHall_CallCentre, IMedicalHall_Doctor, IMedicalHall_Patient {
-    // representing the waiting room, one seat for adult and another for a child
-    private TPatient childWaiting;
-    private TPatient adultWaiting;
-
     private final int nRooms = 4;
     private final int size = 2;
     
@@ -50,7 +44,6 @@ public class MMedicalHall implements IMedicalHall_CallCentre, IMedicalHall_Docto
         this.cAdultWaiting = this.rlW.newCondition();
         this.bChildWaiting = false;
         this.bAdultWaiting = false;
-
 
         this.rl = new ReentrantLock();
 
@@ -91,39 +84,34 @@ public class MMedicalHall implements IMedicalHall_CallCentre, IMedicalHall_Docto
         Condition cNotFull = null;
         int patientIdx = 0;
         Condition patientWaiting = null;
-        boolean bPatientWaiting = false;
 
         if (patient.getIsAdult()) {
             patientWaiting = cAdultWaiting;
-            bPatientWaiting = bAdultWaiting;
-
             patientRoom = MDRA;
             cNotFull = cNotFullMDRA;
-            patientIdx = 0;
+            patientIdx = 2;
         } else {
             patientWaiting = cChildWaiting;
-            bPatientWaiting = bChildWaiting;
-
             patientRoom = MDRC;
             cNotFull = cNotFullMDRC;
-            patientIdx = 2;
+            patientIdx = 0;
         }
         
         patient.log("MDH");
-
-        patient.notifyExit("MDW");
 
         try {
             rlW.lock();
 
             // wait for call centre to call him to an MDR
-            while (bPatientWaiting)
-                patientWaiting.await();
-
-            if (patient.getIsAdult())
-                bAdultWaiting = true;
-            else
-                bChildWaiting = true;
+            if (patient.getIsAdult() ) {
+                while ( !bAdultWaiting )
+                    patientWaiting.await();
+                bAdultWaiting = false;
+            } else {
+                while ( !bChildWaiting )
+                    patientWaiting.await();
+                bChildWaiting = false;
+            }
 
         } catch (InterruptedException e) {
             e.printStackTrace();
@@ -132,11 +120,13 @@ public class MMedicalHall implements IMedicalHall_CallCentre, IMedicalHall_Docto
         }
 
         patient.notifyExit("MDW");
+        System.out.println("Notifiquei o Call Center que sai do MDH");
 
         patient.tSleep();
 
         try {
             rl.lock();
+            System.out.println("MMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMM");
 
             // wait while room is full
             while (patientRoom.isFull())
@@ -148,11 +138,13 @@ public class MMedicalHall implements IMedicalHall_CallCentre, IMedicalHall_Docto
             // increase room counter
             patientRoom.incCounter();
 
-            patient.log(String.format("MDR%d", patientIdx));
+            patient.log(String.format("MDR%d", patientIdx+1));
+            System.out.println("PPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPP");
 
         } catch (InterruptedException e) {
                 e.printStackTrace();
         } finally {
+            System.out.println("LLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLL");
             rl.unlock();
         }
 
@@ -169,7 +161,7 @@ public class MMedicalHall implements IMedicalHall_CallCentre, IMedicalHall_Docto
 
             bPatient[patientIdx] = false;
 
-            patientRoom.getPatientById(patientIdx);
+            patientRoom.getPatientById( patientIdx % size );
 
             if ( patientRoom.isFull() )
                 cNotFull.signal();
@@ -179,7 +171,6 @@ public class MMedicalHall implements IMedicalHall_CallCentre, IMedicalHall_Docto
         } catch (InterruptedException e) {
             e.printStackTrace();
         } finally {
-            System.out.println(String.format("SAI DO ETH AGORA %s", patient));
             rl.unlock();
         }
 
@@ -195,10 +186,16 @@ public class MMedicalHall implements IMedicalHall_CallCentre, IMedicalHall_Docto
             try {
                 rl.lock();
 
-                bDoctor[roomId] = false;
                 while ( !bDoctor[roomId] )
                     cDoctor[roomId].await();
-                                
+
+                bDoctor[roomId] = false;
+
+                if (roomId > 1)
+                    patient = MDRA.getFIFO()[ roomId % size ];
+                else
+                    patient = MDRC.getFIFO()[ roomId ];
+
             } catch (InterruptedException e) {
                 e.printStackTrace();
             } finally {
@@ -206,7 +203,6 @@ public class MMedicalHall implements IMedicalHall_CallCentre, IMedicalHall_Docto
             }
 
             doctor.evaluate( patient );
-            patient.log(String.format("MDR%d", roomId+1));
 
             try {
                 rl.lock();
@@ -218,15 +214,15 @@ public class MMedicalHall implements IMedicalHall_CallCentre, IMedicalHall_Docto
         }
     }
 
-    public void exitHall(String patientType) {
+    public void exitWaitingRoom(String patientType) {
         rlW.lock();
 
         if (patientType.equals("A")) {
-            cAdultWaiting.signal();
             bAdultWaiting = true;
+            cAdultWaiting.signal();
         } else {
-            cChildWaiting.signal();
             bChildWaiting = true;
+            cChildWaiting.signal();
         }
 
         rlW.unlock();
