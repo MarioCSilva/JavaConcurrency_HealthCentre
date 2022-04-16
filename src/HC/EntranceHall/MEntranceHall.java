@@ -99,7 +99,7 @@ public class MEntranceHall implements IEntranceHall_CallCentre, IEntranceHall_Pa
                 patientETN = ETN1++;
             }
 
-            patient.log("ETH");
+            patient.logMovement(null, "ETH");
     
             // wait while room is full
             while (patientRoom.isFull() || (patient.getIsAdult() && currentETN2 != patientETN) ||

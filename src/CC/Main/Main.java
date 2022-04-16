@@ -16,11 +16,11 @@ public class Main {
         Controller controller = new Controller(client);
 
         SwingUtilities.invokeLater(() -> {
-            GUI gui = new GUI(controller);
+            GUICC GUICC = new GUICC(controller);
             JFrame jf = new JFrame();
             jf.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
             jf.setSize(800, 500);
-            jf.add(gui.getPanel1());
+            jf.add(GUICC.getPanel1());
             jf.setVisible(true);
         });
     }

@@ -8,7 +8,7 @@ import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 
-public class GUI extends JPanel {
+public class GUICC extends JPanel {
     private Controller controller;
 
     public JPanel getPanel1() {
@@ -32,7 +32,7 @@ public class GUI extends JPanel {
     private JSpinner EVT;
     private JRadioButton manualModeRadioButton;
 
-    public GUI(Controller controller) {
+    public GUICC(Controller controller) {
         this.controller = controller;
 
         startButton.setEnabled(true);

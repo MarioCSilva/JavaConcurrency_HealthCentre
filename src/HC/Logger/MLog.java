@@ -7,9 +7,9 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.ReentrantLock;
 
+import HC.Controller.Controller;
 import HC.Entities.TPatient;
 
 public class MLog implements ILog_ClientHandler, ILog_Patient {
@@ -18,7 +18,10 @@ public class MLog implements ILog_ClientHandler, ILog_Patient {
     private final String fileName = "log.txt";
     private final List<String> headers;
 
-    public MLog() throws IOException {
+    private final Controller controller;
+
+    public MLog(Controller controller) throws IOException {
+        this.controller = controller;
         new File(this.fileName);
         this.logFile = new BufferedWriter(new FileWriter(fileName));
         this.rl = new ReentrantLock();
@@ -33,7 +36,33 @@ public class MLog implements ILog_ClientHandler, ILog_Patient {
     public void writeState(String message) {
         write(String.format(" %-4s|%-13s|%-21s|%-16s|%-26s|%-4s", message, "", "", "", "", ""));
     }
-    
+
+    public void writePatientMovement(TPatient patient, String roomExiting, String roomEntering) {
+        var args = new String[headers.size()];
+        Arrays.fill(args, "");
+        int index = headers.indexOf(roomEntering);
+        if (index == -1) {
+            throw new IllegalArgumentException("Room not recognized.");
+        }
+        args[index] = patient.toString();
+        String message = String.format(" %-4s| %-4s%-4s%-4s| %-5s%-5s%-5s%-5s| %-5s%-5s%-5s| %-5s%-5s%-5s%-5s%-5s| %-4s | %-4s",
+                (Object[]) args);
+
+        rl.lock();
+
+        try {
+            this.logFile.write(message);
+            this.logFile.newLine();
+            this.logFile.flush();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
+        controller.addPatient(patient, roomEntering);
+
+        rl.unlock();
+    }
+
     public void writePatient(TPatient patient, String room) {
         var args = new String[headers.size()];
         Arrays.fill(args, "");

@@ -79,6 +79,10 @@ public class TPatient extends Thread {
         logger.writePatient(this, room);
     }
 
+    public void logMovement(String roomExiting, String roomEntering) {
+        logger.writePatientMovement(this, roomExiting, roomEntering);
+    }
+
     public void notifyEntrance(String hall) {
         mCallCentreHall.notifyEntrance(this, hall);
     }

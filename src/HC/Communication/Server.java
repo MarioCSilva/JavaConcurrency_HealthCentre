@@ -4,7 +4,6 @@ package HC.Communication;
 import HC.Entities.TClientHandler;
 import HC.Logger.MLog;
 
-import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.net.ServerSocket;
@@ -18,13 +17,9 @@ public class Server {
     private ObjectOutputStream out = null;
     private MLog logger;
 
-    public Server(int port) {
+    public Server(int port, MLog logger) {
         this.port = port;
-        try {
-			this.logger = new MLog();
-		} catch (IOException e) {
-			e.printStackTrace();
-		}
+        this.logger = logger;
     }
 
     public void start() {
