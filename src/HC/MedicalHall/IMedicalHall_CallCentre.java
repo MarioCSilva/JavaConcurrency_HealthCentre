@@ -1,4 +1,3 @@
-
 package HC.MedicalHall;
 
 public interface IMedicalHall_CallCentre {

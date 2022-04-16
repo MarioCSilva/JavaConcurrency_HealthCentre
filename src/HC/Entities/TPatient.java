@@ -1,16 +1,16 @@
 package HC.Entities;
 
-import HC.Enumerates.DoS;
-
-import java.util.Random;
-
-import HC.EntranceHall.IEntranceHall_Patient;
-import HC.EvaluationHall.IEvaluationHall_Patient;
 import HC.CallCentreHall.ICallCentreHall_Patient;
-import HC.Logger.ILog_Patient;
+import HC.EntranceHall.IEntranceHall_Patient;
+import HC.Enumerates.DoS;
+import HC.EvaluationHall.IEvaluationHall_Patient;
+import HC.Controller.IController_Patient;
 import HC.MedicalHall.IMedicalHall_Patient;
 import HC.PaymentHall.IPaymentHall_Patient;
 import HC.WaitingHall.IWaitingHall_Patient;
+
+import java.io.IOException;
+import java.util.Random;
 
 public class TPatient extends Thread {
     private final int patientId;
@@ -25,14 +25,13 @@ public class TPatient extends Thread {
     private Integer TN;
     private DoS dos;
     private int ttm;
-    private final ILog_Patient logger;
-    private int appointmentTime = 0;
+    private final IController_Patient controller;
 
-    public TPatient(int patientId, int ttm, boolean isAdult, ILog_Patient logger, ICallCentreHall_Patient mCallCentreHall,
+    public TPatient(int patientId, int ttm, boolean isAdult, IController_Patient controller, ICallCentreHall_Patient mCallCentreHall,
                     IEntranceHall_Patient mEntranceHall, IEvaluationHall_Patient mEvaluationHall, IWaitingHall_Patient mWaitingHall,
                     IMedicalHall_Patient mMedicalHall, IPaymentHall_Patient mPaymentHall) {
         this.patientId = patientId;
-        this.logger = logger;
+        this.controller = controller;
         this.mEntranceHall = mEntranceHall;
         this.mEvaluationHall = mEvaluationHall;
         this.mCallCentreHall = mCallCentreHall;
@@ -44,43 +43,46 @@ public class TPatient extends Thread {
         this.ttm = ttm;
     }
 
+    public void kill() {
+        this.interrupt();
+    }
+
     @Override
     public void run() {
+        try {
+            tSleep();
 
-        tSleep();
+            // enter the ETH
+            this.mEntranceHall.enterHall(this);
 
-        // enter the ETH
-        this.mEntranceHall.enterHall(this);
-        System.out.println(String.format("paciente - sai do eth %s", this.toString()));
-        
-        tSleep();
+            tSleep();
 
-        // enter the EVH
-        this.mEvaluationHall.enterHall(this);
+            // enter the EVH
+            this.mEvaluationHall.enterHall(this);
 
-        tSleep();
+            tSleep();
 
-        // enter the WTH
-        this.mWaitingHall.enterHall(this);
+            // enter the WTH
+            this.mWaitingHall.enterHall(this);
 
-        tSleep();
+            tSleep();
 
-        // enter the MDH
-        this.mMedicalHall.enterHall(this);
+            // enter the MDH
+            this.mMedicalHall.enterHall(this);
 
-        tSleep();
+            tSleep();
 
-        // enter the MDH
-        this.mPaymentHall.enterHall(this);
+            // enter the MDH
+            this.mPaymentHall.enterHall(this);
 
+        } catch (InterruptedException | IOException e) {
+            System.out.println(String.format("Patient %s has died", toString()));
+            Thread.currentThread().interrupt();
+        }
     }
 
-    public void log(String room) {
-        logger.writePatient(this, room);
-    }
-
-    public void logMovement(String roomExiting, String roomEntering) {
-        logger.writePatientMovement(this, roomExiting, roomEntering);
+    public void log(String room) throws InterruptedException, IOException {
+        controller.writePatientMovement(this, room);
     }
 
     public void notifyEntrance(String hall) {
@@ -91,21 +93,24 @@ public class TPatient extends Thread {
         mCallCentreHall.notifyExit(this, hall);
     }
 
-    public void tSleep() {
+    public void tSleep() throws InterruptedException {
+        checkSuspend();
+
         if (ttm > 0) {
-            try {
-                Thread.sleep(new Random().nextInt(ttm));
-            } catch (InterruptedException e) {
-                e.printStackTrace();
-            }
+            Thread.sleep(new Random().nextInt(ttm));
+            checkSuspend();
         }
     }
 
-    public boolean getIsAdult(){
+    public void checkSuspend() throws InterruptedException {
+        controller.checkSuspend();
+    }
+
+    public boolean getIsAdult() {
         return this.isAdult;
     }
 
-    public String getPatientType(){
+    public String getPatientType() {
         return this.patientType;
     }
 
@@ -129,16 +134,11 @@ public class TPatient extends Thread {
     public DoS getDoS() {
         return this.dos;
     }
-    public void setAppointmentTime(int appointmentTime){
-        this.appointmentTime = appointmentTime;
-    }
-    
 
     @Override
     public String toString() {
-        String adultStr = this.isAdult ? "A" : "C"; 
-        String tnStr = this.getTN() == null ? "" : String.valueOf(this.getTN());
+        String adultStr = this.isAdult ? "A" : "C";
         String dosStr = this.getDoS() == null ? "" : this.getDoS().toString().substring(0, 1);
-        return String.format("%s0%s%s", adultStr, tnStr, dosStr);
+        return String.format("%s%02d%s", adultStr, this.getTN(), dosStr);
     }
 }

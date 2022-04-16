@@ -1,12 +1,15 @@
 package HC.Controller;
 
+import HC.Communication.Message;
+
 import java.io.FileNotFoundException;
 import java.io.IOException;
-import java.util.concurrent.locks.Condition;
 
-public interface ILog_ClientHandler {
+public interface IController_ClientHandler {
     void write(String msg) throws IOException;
+
     void writeHeaders() throws IOException;
+
     void writeState(String msg) throws IOException;
 
     void suspendSimulation() throws IOException;
@@ -15,5 +18,7 @@ public interface ILog_ClientHandler {
 
     void stopSimulation() throws InterruptedException, FileNotFoundException, IOException;
 
-    void startSimulation() throws InterruptedException, IOException;
+    void startSimulation(Message msg) throws InterruptedException, IOException;
+
+    void endSimulation() throws IOException;
 }

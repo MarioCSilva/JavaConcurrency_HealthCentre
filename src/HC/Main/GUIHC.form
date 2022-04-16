@@ -111,7 +111,7 @@
               <text value="Evaluation Hall"/>
             </properties>
           </component>
-          <component id="8bbf6" class="javax.swing.JLabel" binding="EVR2">
+          <component id="8bbf6" class="javax.swing.JLabel">
             <constraints>
               <grid row="1" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="0" fill="0" indent="0" use-parent-layout="false"/>
             </constraints>
@@ -119,7 +119,7 @@
               <text value="EVR2"/>
             </properties>
           </component>
-          <component id="7348d" class="javax.swing.JLabel" binding="EVR1">
+          <component id="7348d" class="javax.swing.JLabel">
             <constraints>
               <grid row="1" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="0" fill="0" indent="0" use-parent-layout="false"/>
             </constraints>
@@ -157,7 +157,7 @@
               </component>
             </children>
           </scrollpane>
-          <component id="72cc1" class="javax.swing.JLabel" binding="EVR3">
+          <component id="72cc1" class="javax.swing.JLabel">
             <constraints>
               <grid row="1" column="2" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="0" fill="0" indent="0" use-parent-layout="false"/>
             </constraints>
@@ -165,7 +165,7 @@
               <text value="EVR3"/>
             </properties>
           </component>
-          <component id="69ba" class="javax.swing.JLabel" binding="EVR4">
+          <component id="69ba" class="javax.swing.JLabel">
             <constraints>
               <grid row="1" column="3" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="0" fill="0" indent="0" use-parent-layout="false"/>
             </constraints>

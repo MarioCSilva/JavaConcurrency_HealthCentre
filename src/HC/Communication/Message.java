@@ -1,7 +1,8 @@
 package HC.Communication;
 
-import java.io.Serializable;
 import HC.Enumerates.MessageTopic;
+
+import java.io.Serializable;
 
 public class Message implements Serializable {
     private MessageTopic topic;
@@ -17,7 +18,7 @@ public class Message implements Serializable {
         this.topic = topic;
     }
 
-    public Message(MessageTopic topic, int numberOfAdults, int numberOfChildren, int nos, int evt, int mdt, int pyt, int ttm ) {
+    public Message(MessageTopic topic, int numberOfAdults, int numberOfChildren, int nos, int evt, int mdt, int pyt, int ttm) {
         this.topic = topic;
         this.numberOfAdults = numberOfAdults;
         this.numberOfChildren = numberOfChildren;

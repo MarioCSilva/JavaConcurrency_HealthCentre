@@ -2,8 +2,9 @@ package HC.PaymentHall;
 
 import HC.Entities.TCashier;
 import HC.Entities.TPatient;
-import HC.FIFO.MFIFO;
+import HC.Queue.PriorityQueue;
 
+import java.io.IOException;
 import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.ReentrantLock;
 
@@ -12,7 +13,7 @@ public class MPaymentHall implements IPaymentHall_Cashier, IPaymentHall_Patient 
     private int currentPYN = 1;
     private final int size;
     private final ReentrantLock rl;
-    private final MFIFO paymentQueue;
+    private final PriorityQueue paymentQueue;
     private final Condition cArrayPQ[];
     private final boolean bArrayPQ[];
     private final Condition cNotFullPQ;
@@ -24,18 +25,18 @@ public class MPaymentHall implements IPaymentHall_Cashier, IPaymentHall_Patient 
     public MPaymentHall(int size) {
         this.size = size;
         this.rl = new ReentrantLock();
-        this.paymentQueue = new MFIFO(size);
+        this.paymentQueue = new PriorityQueue(size);
         this.cCashier = rl.newCondition();
         this.cNotFullPQ = rl.newCondition();
         this.cArrayPQ = new Condition[size];
         this.bArrayPQ = new boolean[size];
-        for(int i = 0; i< size; i++) {
+        for (int i = 0; i < size; i++) {
             this.bArrayPQ[i] = false;
             this.cArrayPQ[i] = rl.newCondition();
         }
     }
 
-    public void enterHall(TPatient patient) {
+    public void enterHall(TPatient patient) throws InterruptedException, IOException {
         int patientIdx = 0;
 
         // give an PYN to each patient upon entering ETH
@@ -43,14 +44,16 @@ public class MPaymentHall implements IPaymentHall_Cashier, IPaymentHall_Patient 
             rl.lock();
 
             int patientPYN = PYN++;
-            
+
             patient.setTN(patientPYN);
 
             patient.log("PYH");
 
             // wait while room is full
-            while (paymentQueue.isFull() || (currentPYN != patientPYN) )
+            while (paymentQueue.isFull() || (currentPYN != patientPYN))
                 cNotFullPQ.await();
+
+            patient.checkSuspend();
 
             // assign the patient to a room
             patientIdx = paymentQueue.put(patient);
@@ -63,42 +66,39 @@ public class MPaymentHall implements IPaymentHall_Cashier, IPaymentHall_Patient 
             cCashier.signal();
 
             // stay blocked on room since it has entered
-            while ( !bArrayPQ[ patientIdx ] )
-                cArrayPQ[ patientIdx ].await();
+            while (!bArrayPQ[patientIdx])
+                cArrayPQ[patientIdx].await();
 
-            bArrayPQ[ patientIdx ] = false;
+            bArrayPQ[patientIdx] = false;
 
-        } catch (InterruptedException e) {
-            e.printStackTrace();
+            patient.checkSuspend();
+
         } finally {
             rl.unlock();
         }
     }
 
     @Override
-    public void work(TCashier cashier) {
+    public void work(TCashier cashier) throws InterruptedException, IOException {
         TPatient patient;
         int patientIdx = 0;
-        
-        while (true){
+
+        while (true) {
             patient = null;
             try {
                 rl.lock();
 
-                while ( numPayments == 0 )
+                while (numPayments == 0)
                     cCashier.await();
 
                 numPayments--;
 
-                for (int i=0; i<size; i++) {
-                    if (paymentQueue.getFIFO()[i] != null && (patient == null || patient.getTN() > paymentQueue.getFIFO()[i].getTN())) {
-                        patient = paymentQueue.getFIFO()[i];
+                for (int i = 0; i < size; i++) {
+                    if (paymentQueue.getQueue()[i] != null && (patient == null || patient.getTN() > paymentQueue.getQueue()[i].getTN())) {
+                        patient = paymentQueue.getQueue()[i];
                         patientIdx = i;
                     }
                 }
-
-            } catch (InterruptedException e) {
-                e.printStackTrace();
             } finally {
                 rl.unlock();
             }
@@ -107,12 +107,12 @@ public class MPaymentHall implements IPaymentHall_Cashier, IPaymentHall_Patient 
 
             try {
                 rl.lock();
-                bArrayPQ[ patientIdx ] = true;
-                cArrayPQ[ patientIdx ].signal();
+                bArrayPQ[patientIdx] = true;
+                cArrayPQ[patientIdx].signal();
 
                 currentPYN++;
 
-                paymentQueue.getFIFO()[ patientIdx ].log("OUT");
+                paymentQueue.getQueue()[patientIdx].log("OUT");
 
                 paymentQueue.getPatientById(patientIdx);
 

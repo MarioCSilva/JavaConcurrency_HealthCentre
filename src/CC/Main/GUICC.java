@@ -1,6 +1,6 @@
 package CC.Main;
 
-import CC.Controller.Controller;
+import CC.ControllerGUI.ControllerGUI;
 
 import javax.swing.*;
 import javax.swing.border.TitledBorder;
@@ -9,7 +9,7 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 
 public class GUICC extends JPanel {
-    private Controller controller;
+    private ControllerGUI controllerGUI;
 
     public JPanel getPanel1() {
         return panel1;
@@ -32,32 +32,75 @@ public class GUICC extends JPanel {
     private JSpinner EVT;
     private JRadioButton manualModeRadioButton;
 
-    public GUICC(Controller controller) {
-        this.controller = controller;
+    public GUICC(ControllerGUI controllerGUI) {
+        this.controllerGUI = controllerGUI;
 
         startButton.setEnabled(true);
-        endButton.setEnabled(false);
+        endButton.setEnabled(true);
         resumeButton.setEnabled(false);
         suspendButton.setEnabled(false);
         stopButton.setEnabled(false);
-        numberOfAdultsSpinner.setValue(5);
-        numberOfChildrenSpinner.setValue(5);
+        numberOfAdultsSpinner.setValue(10);
+        numberOfChildrenSpinner.setValue(10);
         numberOfSeats.setValue(4);
         EVT.setValue(100);
+        PYT.setValue(100);
+        MDT.setValue(100);
         TTM.setValue(100);
 
         startButton.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
-                controller.startSimulation((Integer) numberOfAdultsSpinner.getValue(),
+                controllerGUI.startSimulation((Integer) numberOfAdultsSpinner.getValue(),
                         (Integer) numberOfChildrenSpinner.getValue(),
                         (Integer) numberOfSeats.getValue(),
                         (Integer) EVT.getValue(),
                         (Integer) MDT.getValue(),
                         (Integer) PYT.getValue(),
                         (Integer) TTM.getValue());
+                startButton.setEnabled(false);
+                suspendButton.setEnabled(true);
+                stopButton.setEnabled(true);
             }
         });
+
+        suspendButton.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                controllerGUI.suspendSimulation();
+                suspendButton.setEnabled(false);
+                resumeButton.setEnabled(true);
+            }
+        });
+
+        resumeButton.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                controllerGUI.resumeSimulation();
+                resumeButton.setEnabled(false);
+                suspendButton.setEnabled(true);
+            }
+        });
+
+        stopButton.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                controllerGUI.stopSimulation();
+                startButton.setEnabled(true);
+                endButton.setEnabled(true);
+                resumeButton.setEnabled(false);
+                suspendButton.setEnabled(false);
+                stopButton.setEnabled(false);
+            }
+        });
+
+        endButton.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                controllerGUI.endSimulation();
+            }
+        });
+
     }
 
     {

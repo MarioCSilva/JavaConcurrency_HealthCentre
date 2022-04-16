@@ -5,10 +5,10 @@
 package Process1.Monitor;
 
 /**
- *
  * @author user
  */
 public interface ISharedRegion2_Entity1 {
     void c1();
+
     void c2();
 }

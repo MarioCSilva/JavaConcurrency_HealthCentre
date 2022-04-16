@@ -1,8 +1,8 @@
 package HC.Main;
 
-import HC.Controller.Controller;
 import HC.Communication.Server;
-import HC.Logger.MLog;
+import HC.ControllerGUI.ControllerGUI;
+import HC.Controller.MController;
 
 import javax.swing.*;
 import java.io.IOException;
@@ -18,11 +18,11 @@ public class Main {
         jf.setSize(800, 500);
         jf.add(GUI.getPanel1());
         jf.setVisible(true);
-        Controller controller = new Controller(GUI);
-        final MLog logger;
+        ControllerGUI controllerGUI = new ControllerGUI(GUI);
+        final MController controller;
         try {
-            logger = new MLog(controller);
-            Server server = new Server(HCPort, logger);
+            controller = new MController(controllerGUI);
+            Server server = new Server(HCPort, controller);
             server.start();
         } catch (IOException e) {
             e.printStackTrace();

@@ -3,11 +3,9 @@ package HC.CallCentreHall;
 import HC.Entities.TCallCentre;
 import HC.Entities.TPatient;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.util.HashMap;
 import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.ReentrantLock;
-import java.util.HashMap;
 
 public class MCallCentreHall implements ICallCentreHall_Patient,
         ICallCentreHall_CallCentre {
@@ -26,7 +24,7 @@ public class MCallCentreHall implements ICallCentreHall_Patient,
     private final int maxSeatsMDR = 2;
 
     private HashMap<String, Integer> hallPatients;
-      
+
     public MCallCentreHall(int nos) {
         this.nPatientsETH = 0;
         this.nPatientsEVH = 0;
@@ -37,7 +35,7 @@ public class MCallCentreHall implements ICallCentreHall_Patient,
 
         this.nPatientsMDRAdults = 0;
         this.nPatientsMDRChildren = 0;
-        
+
         this.hallPatients = new HashMap<>();
         this.hallPatients.put("ETH", 0);
         this.hallPatients.put("EVH", 0);
@@ -51,8 +49,8 @@ public class MCallCentreHall implements ICallCentreHall_Patient,
         this.lock1 = new ReentrantLock();
         this.cAwakeCC = lock1.newCondition();
         this.bAwakeCC = false;
-    }   
-    
+    }
+
 
     public void notifyEntrance(TPatient patient, String hall) {
         lock1.lock();
@@ -61,7 +59,7 @@ public class MCallCentreHall implements ICallCentreHall_Patient,
             hall += patient.getPatientType();
 
         int patients = hallPatients.get(hall);
-        hallPatients.put(hall, patients + 1 );
+        hallPatients.put(hall, patients + 1);
 
         this.cAwakeCC.signal();
         this.bAwakeCC = true;
@@ -74,9 +72,9 @@ public class MCallCentreHall implements ICallCentreHall_Patient,
 
         if (hall.equals("MDW") || hall.equals("MDR"))
             hall += patient.getPatientType();
-        
+
         int patients = hallPatients.get(hall);
-        hallPatients.put(hall, patients -1);
+        hallPatients.put(hall, patients - 1);
 
         this.cAwakeCC.signal();
         this.bAwakeCC = true;
@@ -84,8 +82,8 @@ public class MCallCentreHall implements ICallCentreHall_Patient,
         lock1.unlock();
     }
 
-    public void work(TCallCentre cc) {
-        int numToCallETH=0, numToCallWTHA=0, numToCallWTHC=0, numToCallMDWA=0, numToCallMDWC=0, i=0;
+    public void work(TCallCentre cc) throws InterruptedException {
+        int numToCallETH = 0, numToCallWTHA = 0, numToCallWTHC = 0, numToCallMDWA = 0, numToCallMDWC = 0, i = 0;
 
         while (true) {
 
@@ -97,41 +95,28 @@ public class MCallCentreHall implements ICallCentreHall_Patient,
 
                 this.bAwakeCC = false;
 
-                // int nPatientsETH = hallPatients.get("ETH");
-                // int nPatientsEVH = hallPatients.get("EVH");
-                // freeSpaces = maxSeatsEVR - nPatientsEVH;
-                // numToCallETH = freeSpaces <= nPatientsETH ? freeSpaces : nPatientsETH;
-                // System.out.println(String.format("Number to Call ETH %d", numToCallETH));
-                // nPatientsETH -= numToCallETH;
-                // nPatientsEVH += numToCallETH;
-
-                System.out.println(String.format("WTHA %d | WTHC %d | MDWHA %d | MDWC %d", hallPatients.get("WTHA"),
-                        hallPatients.get("WTHC"), hallPatients.get("MDWA"), hallPatients.get("MDWC")));
-
                 numToCallETH = updateNumPatients("ETH", "EVH", maxSeatsEVR);
                 numToCallWTHA = updateNumPatients("WTHA", "MDWA", maxSeatsMDW);
                 numToCallWTHC = updateNumPatients("WTHC", "MDWC", maxSeatsMDW);
-                numToCallMDWA = updateNumPatients("MDWA", "MDRA", maxSeatsMDR);                
+                numToCallMDWA = updateNumPatients("MDWA", "MDRA", maxSeatsMDR);
                 numToCallMDWC = updateNumPatients("MDWC", "MDRC", maxSeatsMDR);
 
-            } catch (Exception e) {
-                System.out.println(e);
             } finally {
                 lock1.unlock();
             }
-            for (i=0; i<numToCallETH; i++)
+            for (i = 0; i < numToCallETH; i++)
                 cc.callETHPatient();
 
-            for (i=0; i<numToCallWTHA; i++)
+            for (i = 0; i < numToCallWTHA; i++)
                 cc.callWTHAPatient();
-            
-            for (i=0; i<numToCallWTHC; i++)
+
+            for (i = 0; i < numToCallWTHC; i++)
                 cc.callWTHCPatient();
-            
-            for (i=0; i<numToCallMDWA; i++)
+
+            for (i = 0; i < numToCallMDWA; i++)
                 cc.callMDWAPatient();
-            
-            for (i=0; i<numToCallMDWC; i++)
+
+            for (i = 0; i < numToCallMDWC; i++)
                 cc.callMDWCPatient();
         }
     }
@@ -147,17 +132,11 @@ public class MCallCentreHall implements ICallCentreHall_Patient,
         nToExit -= numToCall;
         nToEnter += numToCall;
 
-        if (numToCall == -1) {
-            System.out.println(String.format("%d %d %d", nToExit, nToEnter, maxSeatsHallToEnter));
-        }
-        
-        System.out.println(String.format("Number to Call %s %d", hallToExit, numToCall));
-        
         if (!hallToEnter.equals("MDRA") && !hallToEnter.equals("MDRC"))
             hallPatients.put(hallToExit, nToExit);
 
         hallPatients.put(hallToEnter, nToEnter);
-        
+
         return numToCall;
     }
 }

@@ -1,10 +1,13 @@
 package CC.Communication;
 
 import HC.Communication.Message;
-import HC.Enumerates.MessageTopic;
 
-import java.io.*;
-import java.net.*;
+import java.io.IOException;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
+import java.net.InetSocketAddress;
+import java.net.Socket;
+import java.net.SocketAddress;
 
 // Client class
 public class Client extends Thread {
@@ -33,26 +36,6 @@ public class Client extends Thread {
             in = new ObjectInputStream(clientSocket.getInputStream());
         } catch (IOException e) {
             e.printStackTrace();
-        }
-    }
-
-    public void handleMsg() {
-        Message msg;
-        while (true) {
-            try {
-                if (!((msg = (Message) in.readObject()) != null)) {
-                    // writing the received message from the server
-                    System.out.printf(
-                            " Sent from the server: %s%n",
-                            msg.getTopic());
-                    System.out.println(msg);
-                    break;
-                }
-            } catch (IOException e) {
-                e.printStackTrace();
-            } catch (ClassNotFoundException e) {
-                e.printStackTrace();
-            }
         }
     }
 

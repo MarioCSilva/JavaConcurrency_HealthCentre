@@ -3,19 +3,22 @@ package HC.Entities;
 
 import HC.CallCentreHall.ICallCentreHall_CallCentre;
 import HC.EntranceHall.IEntranceHall_CallCentre;
+import HC.Controller.IController_CallCentre;
 import HC.MedicalHall.IMedicalHall_CallCentre;
 import HC.WaitingHall.IWaitingHall_CallCentre;
 
 
 public class TCallCentre extends Thread {
+
     private final IEntranceHall_CallCentre eth;
     private final ICallCentreHall_CallCentre cch;
     private final IWaitingHall_CallCentre wth;
     private final IMedicalHall_CallCentre mdh;
+    private final IController_CallCentre controller;
 
-
-    public TCallCentre(IEntranceHall_CallCentre eth, ICallCentreHall_CallCentre cch,
+    public TCallCentre(IController_CallCentre controller, IEntranceHall_CallCentre eth, ICallCentreHall_CallCentre cch,
                        IWaitingHall_CallCentre wth, IMedicalHall_CallCentre mdh) {
+        this.controller = controller;
         this.eth = eth;
         this.cch = cch;
         this.wth = wth;
@@ -24,26 +27,42 @@ public class TCallCentre extends Thread {
 
     @Override
     public void run() {
-        cch.work(this);
+        try {
+            cch.work(this);
+        } catch (InterruptedException e) {
+            System.out.println("Call Centre has died");
+            Thread.currentThread().interrupt();
+        }
     }
 
-    public void callETHPatient() {
+
+    public void kill() {
+        this.interrupt();
+    }
+
+
+    public void callETHPatient() throws InterruptedException {
+        controller.checkSuspend();
         eth.exitHall();
     }
 
-    public void callWTHAPatient() {
+    public void callWTHAPatient() throws InterruptedException {
+        controller.checkSuspend();
         wth.exitHall("A");
     }
 
-    public void callWTHCPatient() {
+    public void callWTHCPatient() throws InterruptedException {
+        controller.checkSuspend();
         wth.exitHall("C");
     }
 
-    public void callMDWAPatient() {
+    public void callMDWAPatient() throws InterruptedException {
+        controller.checkSuspend();
         mdh.exitWaitingRoom("A");
     }
 
-    public void callMDWCPatient() {
+    public void callMDWCPatient() throws InterruptedException {
+        controller.checkSuspend();
         mdh.exitWaitingRoom("C");
     }
 

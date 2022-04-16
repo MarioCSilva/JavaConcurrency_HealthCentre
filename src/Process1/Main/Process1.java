@@ -6,15 +6,9 @@ package Process1.Main;
 
 import Process1.Entities.TEntity1;
 import Process1.Entities.TEntity2;
-import Process1.Monitor.ISharedRegion1_Entity1;
-import Process1.Monitor.ISharedRegion1_Entity2;
-import Process1.Monitor.ISharedRegion2_Entity1;
-import Process1.Monitor.ISharedRegion2_Entity2;
-import Process1.Monitor.MSharedRegion1;
-import Process1.Monitor.MSharedRegion2;
+import Process1.Monitor.*;
 
 /**
- *
  * @author user
  */
 public class Process1 extends javax.swing.JFrame {
@@ -40,12 +34,12 @@ public class Process1 extends javax.swing.JFrame {
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(getContentPane());
         getContentPane().setLayout(layout);
         layout.setHorizontalGroup(
-            layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGap(0, 400, Short.MAX_VALUE)
+                layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                        .addGap(0, 400, Short.MAX_VALUE)
         );
         layout.setVerticalGroup(
-            layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGap(0, 300, Short.MAX_VALUE)
+                layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                        .addGap(0, 300, Short.MAX_VALUE)
         );
 
         pack();
@@ -58,7 +52,7 @@ public class Process1 extends javax.swing.JFrame {
         /* Set the Nimbus look and feel */
         //<editor-fold defaultstate="collapsed" desc=" Look and feel setting code (optional) ">
         /* If Nimbus (introduced in Java SE 6) is not available, stay with the default look and feel.
-         * For details see http://download.oracle.com/javase/tutorial/uiswing/lookandfeel/plaf.html 
+         * For details see http://download.oracle.com/javase/tutorial/uiswing/lookandfeel/plaf.html
          */
         try {
             for (javax.swing.UIManager.LookAndFeelInfo info : javax.swing.UIManager.getInstalledLookAndFeels()) {
@@ -78,32 +72,33 @@ public class Process1 extends javax.swing.JFrame {
         }
         //</editor-fold>
         //</editor-fold>       
-        
+
         /* Create and display the form */
         java.awt.EventQueue.invokeLater(new Runnable() {
             public void run() {
                 new Process1().setVisible(true);
             }
         });
-        
+
         // Eventually this code should be localed elsewhere but not here
         MSharedRegion1 mSh1 = new MSharedRegion1();
         MSharedRegion2 mSh2 = new MSharedRegion2();
-        
+
         // Example of interfaces usage
-        TEntity1 tE1 = new TEntity1( 1, (ISharedRegion1_Entity1)mSh1,
-                                        (ISharedRegion2_Entity1)mSh2 );
+        TEntity1 tE1 = new TEntity1(1, (ISharedRegion1_Entity1) mSh1,
+                (ISharedRegion2_Entity1) mSh2);
         tE1.start();
-        TEntity2 tE2 = new TEntity2( 1, (ISharedRegion1_Entity2)mSh1,
-                                        (ISharedRegion2_Entity2)mSh2);
+        TEntity2 tE2 = new TEntity2(1, (ISharedRegion1_Entity2) mSh1,
+                (ISharedRegion2_Entity2) mSh2);
         tE2.start();
-                
+
         // ....
-        
+
         try {
             tE1.join();
             tE2.join();
-        } catch ( InterruptedException ex ) {}
+        } catch (InterruptedException ex) {
+        }
     }
 
     // Variables declaration - do not modify//GEN-BEGIN:variables

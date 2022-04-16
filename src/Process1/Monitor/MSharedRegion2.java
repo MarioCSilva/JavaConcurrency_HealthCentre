@@ -5,21 +5,23 @@
 package Process1.Monitor;
 
 /**
- *
  * @author user
  */
 public class MSharedRegion2 implements ISharedRegion2_Entity1,
-                                       ISharedRegion2_Entity2 {
+        ISharedRegion2_Entity2 {
     @Override
     public void c1() {
     }
+
     @Override
     public void c2() {
     }
+
     @Override
     public void d1() {
     }
+
     @Override
     public void d2() {
-    }    
+    }
 }

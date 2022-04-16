@@ -5,4 +5,4 @@
 /**
  * This package contains the functionalities responsible for the Log.
  */
-package Process1.Logger;
+package Process1.Controller;

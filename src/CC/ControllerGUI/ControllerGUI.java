@@ -1,19 +1,18 @@
-package CC.Controller;
+package CC.ControllerGUI;
 
 
 import CC.Communication.Client;
 import HC.Communication.Message;
 import HC.Enumerates.MessageTopic;
 
-public class Controller {
+public class ControllerGUI {
     private final Client client;
 
-    public Controller(Client client) {
+    public ControllerGUI(Client client) {
         this.client = client;
     }
 
     public void startSimulation(int numberOfAdults, int numberOfChildren, int nos, int evt, int mdt, int pyt, int ttm) {
-        System.out.println("Starting Simulation...");
         client.sendMsg(
                 new Message(
                         MessageTopic.START,
@@ -24,26 +23,44 @@ public class Controller {
                         mdt,
                         pyt,
                         ttm
-                        ));
+                ));
+        System.out.println("Starting Simulation...");
     }
 
     public void suspendSimulation() {
+        client.sendMsg(
+                new Message(
+                        MessageTopic.SUSPEND
+                ));
         System.out.println("Simulation Suspended");
     }
 
     public void resumeSimulation() {
+        client.sendMsg(
+                new Message(
+                        MessageTopic.RESUME
+                ));
         System.out.println("Resumed Simulation");
     }
 
     public void stopSimulation() {
+        client.sendMsg(
+                new Message(
+                        MessageTopic.STOP
+                ));
         System.out.println("Stopped Simulation");
     }
 
     public void endSimulation() {
+        client.sendMsg(
+                new Message(
+                        MessageTopic.END
+                ));
         System.out.println("Ended Simulation");
+        System.exit(0);
     }
 
-    public void changeOperatingMode(){
+    public void changeOperatingMode() {
         System.out.println("Changed Operating mode");
     }
 }

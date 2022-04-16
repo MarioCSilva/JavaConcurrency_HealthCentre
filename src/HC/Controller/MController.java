@@ -1,17 +1,20 @@
 package HC.Controller;
 
-import java.io.*;
+import HC.Communication.Message;
+import HC.ControllerGUI.ControllerGUI;
+import HC.Entities.TPatient;
+
+import java.io.BufferedWriter;
+import java.io.File;
+import java.io.FileWriter;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.ReentrantLock;
 
-import HC.Communication.Message;
-import HC.ControllerGUI.ControllerGUI;
-import HC.Entities.TPatient;
-
-public class MLog implements IController_ClientHandler, IController_Patient, IController_Cashier, IController_CallCentre, IController_Nurse, IController_Doctor {
+public class MController implements IController_ClientHandler, IController_Patient, IController_Cashier, IController_CallCentre, IController_Nurse, IController_Doctor {
     private ReentrantLock rl;
     private BufferedWriter logFile;
     private final String fileName = "log.txt";
@@ -22,7 +25,7 @@ public class MLog implements IController_ClientHandler, IController_Patient, ICo
     private boolean bSuspend;
     private Condition cSuspend;
 
-    public MLog(ControllerGUI controllerGUI) throws IOException {
+    public MController(ControllerGUI controllerGUI) throws IOException {
         this.controllerGUI = controllerGUI;
         new File(this.fileName);
         this.logFile = new BufferedWriter(new FileWriter(fileName));
@@ -32,7 +35,7 @@ public class MLog implements IController_ClientHandler, IController_Patient, ICo
         this.bSuspend = false;
 
         this.headers = new ArrayList<>(Arrays.asList("STT", "ETH", "ET1", "ET2", "EVR1", "EVR2",
-            "EVR3", "EVR4", "WTH", "WTR1", "WTR2", "MDH", "MDR1", "MDR2", "MDR3", "MDR4", "PYH", "OUT"));
+                "EVR3", "EVR4", "WTH", "WTR1", "WTR2", "MDH", "MDR1", "MDR2", "MDR3", "MDR4", "PYH", "OUT"));
     }
 
     public void writeHeaders() throws IOException {
@@ -99,7 +102,7 @@ public class MLog implements IController_ClientHandler, IController_Patient, ICo
         new File(this.fileName);
         this.logFile = new BufferedWriter(new FileWriter(fileName));
         write(String.format("NoA: %d, NoC: %d, NoS: %d",
-            msg.getNumberOfAdults(), msg.getNumberOfChildren(), msg.getNos()));
+                msg.getNumberOfAdults(), msg.getNumberOfChildren(), msg.getNos()));
         writeHeaders();
         writeState("INI");
         writeState("RUN");
@@ -137,8 +140,6 @@ public class MLog implements IController_ClientHandler, IController_Patient, ICo
 
     public void write(String message) throws IOException {
         rl.lock();
-
-        System.out.println(message);
 
         this.logFile.write(message);
         this.logFile.newLine();

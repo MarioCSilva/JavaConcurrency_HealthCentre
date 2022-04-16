@@ -1,6 +1,8 @@
 package HC.Entities;
 
-import HC.CallCentreHall.*;
+import HC.CallCentreHall.ICallCentreHall_CallCentre;
+import HC.CallCentreHall.ICallCentreHall_Patient;
+import HC.CallCentreHall.MCallCentreHall;
 import HC.Communication.Message;
 import HC.EntranceHall.IEntranceHall_CallCentre;
 import HC.EntranceHall.IEntranceHall_Patient;
@@ -9,8 +11,7 @@ import HC.Enumerates.MessageTopic;
 import HC.EvaluationHall.IEvaluationHall_Nurse;
 import HC.EvaluationHall.IEvaluationHall_Patient;
 import HC.EvaluationHall.MEvaluationHall;
-import HC.FIFO.MFIFO;
-import HC.Logger.*;
+import HC.Controller.*;
 import HC.MedicalHall.IMedicalHall_CallCentre;
 import HC.MedicalHall.IMedicalHall_Doctor;
 import HC.MedicalHall.IMedicalHall_Patient;
@@ -22,7 +23,9 @@ import HC.WaitingHall.IWaitingHall_CallCentre;
 import HC.WaitingHall.IWaitingHall_Patient;
 import HC.WaitingHall.MWaitingHall;
 
-import java.io.*;
+import java.io.IOException;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
 import java.net.Socket;
 
 public class TClientHandler implements Runnable {
@@ -37,22 +40,24 @@ public class TClientHandler implements Runnable {
     private MPaymentHall pyh;
     private TAdultPatient adultPatients[];
     private TChildPatient childPatients[];
-    private TCallCentre cc;
-    private ILog_ClientHandler clientLogger;
-    private MLog defaultLogger;
-    
+    private TNurse nurses[];
+    private TDoctor doctors[];
 
-    public TClientHandler(Socket socket, MLog logger) {
+    private TCashier cashier;
+    private TCallCentre cc;
+
+    private IController_ClientHandler clientController;
+    private MController defaultController;
+
+
+    public TClientHandler(Socket socket, MController controller) {
         this.clientSocket = socket;
-        this.clientLogger = (ILog_ClientHandler) logger;
-        this.defaultLogger = logger;
+        this.clientController = (IController_ClientHandler) controller;
+        this.defaultController = controller;
     }
 
-    public void startSimulation(Message msg) {
-        clientLogger.write(String.format("NoA: %d, NoC: %d, NoS: %d", msg.getNumberOfAdults(), msg.getNumberOfChildren(), msg.getNos()));
-        clientLogger.writeHeaders();
-        clientLogger.writeState("INIT");
 
+    public void startSimulation(Message msg) throws IOException {
         // initiate monitors
         cch = new MCallCentreHall(msg.getNos());
         eth = new MEntranceHall(msg.getNos());
@@ -62,29 +67,30 @@ public class TClientHandler implements Runnable {
         pyh = new MPaymentHall(msg.getNos());
 
         // initiate entities
-        cc = new TCallCentre((IEntranceHall_CallCentre) eth, (ICallCentreHall_CallCentre) cch,
+        cc = new TCallCentre((IController_CallCentre) defaultController, (IEntranceHall_CallCentre) eth, (ICallCentreHall_CallCentre) cch,
                 (IWaitingHall_CallCentre) wth, (IMedicalHall_CallCentre) mdh);
-        clientLogger.writeState("RUN");
         cc.start();
-        TCashier cashier = new TCashier(msg.getPyt(), (IPaymentHall_Cashier) pyh);
+        cashier = new TCashier((IController_Cashier) defaultController, msg.getPyt(), (IPaymentHall_Cashier) pyh);
         cashier.start();
-        for (int i=0; i<4; i++) {
-            TDoctor doctor = new TDoctor(msg.getMdt(), i, (IMedicalHall_Doctor) mdh);
-            doctor.start();
-            TNurse nurse = new TNurse(msg.getEvt(), i, (IEvaluationHall_Nurse) meh);
-            nurse.start();
+        doctors = new TDoctor[4];
+        nurses = new TNurse[4];
+        for (int i = 0; i < 4; i++) {
+            doctors[i] = new TDoctor((IController_Doctor) defaultController, msg.getMdt(), i, (IMedicalHall_Doctor) mdh);
+            doctors[i].start();
+            nurses[i] = new TNurse((IController_Nurse) defaultController, msg.getEvt(), i, (IEvaluationHall_Nurse) meh);
+            nurses[i].start();
         }
         adultPatients = new TAdultPatient[msg.getNumberOfAdults()];
         childPatients = new TChildPatient[msg.getNumberOfChildren()];
         int patientId = 0;
-        for(int i=0; i<msg.getNumberOfAdults(); i++) {
-            adultPatients[i] = new TAdultPatient(patientId++, msg.getTtm(), (ILog_Patient) defaultLogger,
+        for (int i = 0; i < msg.getNumberOfAdults(); i++) {
+            adultPatients[i] = new TAdultPatient(patientId++, msg.getTtm(), (IController_Patient) defaultController,
                     (ICallCentreHall_Patient) cch, (IEntranceHall_Patient) eth, (IEvaluationHall_Patient) meh,
                     (IWaitingHall_Patient) wth, (IMedicalHall_Patient) mdh, (IPaymentHall_Patient) pyh);
             adultPatients[i].start();
         }
-        for (int i=0; i<msg.getNumberOfChildren(); i++) {
-            childPatients[i] = new TChildPatient(patientId++, msg.getTtm(), (ILog_Patient) defaultLogger,
+        for (int i = 0; i < msg.getNumberOfChildren(); i++) {
+            childPatients[i] = new TChildPatient(patientId++, msg.getTtm(), (IController_Patient) defaultController,
                     (ICallCentreHall_Patient) cch, (IEntranceHall_Patient) eth, (IEvaluationHall_Patient) meh,
                     (IWaitingHall_Patient) wth, (IMedicalHall_Patient) mdh, (IPaymentHall_Patient) pyh);
             childPatients[i].start();
@@ -99,38 +105,61 @@ public class TClientHandler implements Runnable {
             // get the input stream of client
             in = new ObjectInputStream(clientSocket.getInputStream());
             Message msg;
-            for (;;) {
+            label:
+            for (; ; ) {
                 try {
                     msg = (Message) in.readObject();
                 } catch (Exception e) {
                     break;
                 }
 
-                System.out.printf(
-                        " Sent from the client: %s%n",
-                        msg.getTopic());
                 MessageTopic topic = msg.getTopic();
-                if (topic == MessageTopic.START) {
-                    System.out.println("Starting simulation");
-                    // start a new simulation
-                    startSimulation(msg);
-                    // Patients are created and go to the Entrance Hall
-                } else if (topic == MessageTopic.SUSPEND) {
-                    // to suspend the running simulation
-                    // Patients, Call Center and Cashier suspend their activity
-                } else if (topic == MessageTopic.RESUME) {
-                    // to resume the running simulation
-                    // Patients, Call Centre and Cashier resume their normal activity
-                } else if (topic == MessageTopic.STOP) {
-                    // to stop the simulation
-                    // simulation evolves to its initial state and all Patients die
-                } else if (topic == MessageTopic.END) {
-                    // to end the simulation
-                    // the two processes end
-                } else if (topic == MessageTopic.MODE) {
-                    // option = {manual, auto}
-                } else {
-                    break;
+                switch (topic) {
+                    case START:
+                        System.out.println("Starting simulation");
+                        // start a new simulation
+                        clientController.startSimulation(msg);
+                        startSimulation(msg);
+                        // Patients are created and go to the Entrance Hall
+                        break;
+                    case SUSPEND:
+                        // to suspend the running simulation
+                        System.out.println("Suspending simulation");
+                        clientController.suspendSimulation();
+                        break;
+                    case RESUME:
+                        System.out.println("Resuming simulation");
+                        // to resume the running simulation
+                        clientController.resumeSimulation();
+                        break;
+                    case STOP:
+                        System.out.println("Stopping simulation");
+                        // to stop the simulation
+                        // simulation evolves to its initial state and all Patients die
+                        int i;
+                        for (i = 0; i < adultPatients.length; i++)
+                            adultPatients[i].interrupt();
+                        for (i = 0; i < childPatients.length; i++)
+                            childPatients[i].kill();
+                        for (i = 0; i < doctors.length; i++)
+                            doctors[i].kill();
+                        for (i = 0; i < nurses.length; i++)
+                            nurses[i].kill();
+                        cashier.kill();
+                        cc.kill();
+                        Thread.sleep(100);
+                        clientController.stopSimulation();
+                        break;
+                    case END:
+                        System.out.println("Ending Simulation");
+                        // to end the simulation
+                        clientController.endSimulation();
+                        break;
+                    case MODE:
+                        // option = {manual, auto}
+                        break;
+                    default:
+                        break label;
                 }
             }
         } catch (Exception e) {
