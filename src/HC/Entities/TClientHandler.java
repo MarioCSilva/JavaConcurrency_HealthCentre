@@ -68,7 +68,7 @@ public class TClientHandler implements Runnable {
         cc.start();
         TCashier cashier = new TCashier(msg.getPyt(), (IPaymentHall_Cashier) pyh);
         cashier.start();
-        for (int i=0; i<4; i++){
+        for (int i=0; i<4; i++) {
             TDoctor doctor = new TDoctor(msg.getMdt(), i, (IMedicalHall_Doctor) mdh);
             doctor.start();
             TNurse nurse = new TNurse(msg.getEvt(), i, (IEvaluationHall_Nurse) meh);

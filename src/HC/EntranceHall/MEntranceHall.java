@@ -10,8 +10,12 @@ import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.ReentrantLock;
 
 public class MEntranceHall implements IEntranceHall_CallCentre, IEntranceHall_Patient {
+    private int ETN = 1;
     private int ETN1 = 1;
     private int ETN2 = 1;
+    private int currentETN1 = 1;
+    private int currentETN2 = 1;
+
     private final int size;
 
     private final ReentrantLock rl;
@@ -79,25 +83,28 @@ public class MEntranceHall implements IEntranceHall_CallCentre, IEntranceHall_Pa
             bExit = bExitETR1;
         }
 
-        // give an ETN to each patient upon entering ETH
-
         try {
             rl.lock();
 
             System.out.println(String.format("Entrei no ETH========%s", patient));
     
-            if (patient.getIsAdult())
-                patient.setTN(ETN2++);
-            else
-                patient.setTN(ETN1++);
-    
+            int patientETN;
+
+            // give an ETN to each patient according to their age(Child or Adult) upon entering ETH
+            if (patient.getIsAdult()) {
+                patient.setTN(ETN++);
+                patientETN = ETN2++;
+            } else {
+                patient.setTN(ETN++);
+                patientETN = ETN1++;
+            }
+
             patient.log("ETH");
     
             // wait while room is full
-            while (patientRoom.isFull()) {
-                System.out.println(String.format("preso no ETH========%s, com %d", patient, patientRoom.getCount()));
+            while (patientRoom.isFull() || (patient.getIsAdult() && currentETN2 != patientETN) ||
+                    (!patient.getIsAdult() && currentETN1 != patientETN)) 
                 cNotFull.await();
-            }
 
             System.out.println(String.format("fui colocado no ETH========%s", patient));
 
@@ -107,6 +114,8 @@ public class MEntranceHall implements IEntranceHall_CallCentre, IEntranceHall_Pa
             // increase room counter
             patientRoom.incCounter();
 
+            patient.log(room);
+
         } catch (InterruptedException e) {
             e.printStackTrace();
         } finally {
@@ -114,8 +123,6 @@ public class MEntranceHall implements IEntranceHall_CallCentre, IEntranceHall_Pa
         }
 
         patient.tSleep();
-
-        patient.log(room);
 
         patient.notifyEntrance("ETH");
 
@@ -127,13 +134,6 @@ public class MEntranceHall implements IEntranceHall_CallCentre, IEntranceHall_Pa
                 cArray[ patientIdx ].await();
 
             bExit[ patientIdx ] = false;
-
-            patientRoom.getPatientById(patientIdx);
-
-            if ( patientRoom.isFull() )
-                cNotFull.signal();
-
-            patientRoom.decCounter();
 
         } catch (InterruptedException e) {
             e.printStackTrace();
@@ -177,17 +177,31 @@ public class MEntranceHall implements IEntranceHall_CallCentre, IEntranceHall_Pa
 
     public void exitHall(TPatient patient, int idx) {
         Condition cArray[];
+        MFIFO patientRoom;
+        Condition cNotFull;
         boolean bExit[];
 
         if (patient.getIsAdult()) {
+            currentETN2++;
+            patientRoom = ETR2;
             cArray = cArrayETR2;
             bExit = bExitETR2;
+            cNotFull = cNotFullETR2;
         } else {
+            currentETN1++;
+            patientRoom = ETR1;
             cArray = cArrayETR1;
             bExit = bExitETR1;
+            cNotFull = cNotFullETR1;
         }
 
         bExit[ idx ] = true;
         cArray[ idx ].signal();
+
+        patientRoom.getPatientById(idx);
+        
+        cNotFull.signalAll();
+
+        patientRoom.decCounter();
     }
 }

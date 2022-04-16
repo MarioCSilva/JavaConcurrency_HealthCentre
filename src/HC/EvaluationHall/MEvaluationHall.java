@@ -65,8 +65,6 @@ public class MEvaluationHall implements IEvaluationHall_Patient, IEvaluationHall
 
             bPatient[chosenEVR] = false;
 
-            rooms[chosenEVR] = null;
-
         } catch (InterruptedException e) {
                 e.printStackTrace();
         } finally {
@@ -74,7 +72,6 @@ public class MEvaluationHall implements IEvaluationHall_Patient, IEvaluationHall
         }
 
         patient.notifyExit("EVH");
-        System.out.println(String.format("saiu do evh %s", patient));
     }
 
 
@@ -86,9 +83,10 @@ public class MEvaluationHall implements IEvaluationHall_Patient, IEvaluationHall
             try {
                 rl.lock();
 
-                bNurse[roomId] = false;
                 while ( !bNurse[roomId] )
                     cNurse[roomId].await();
+
+                bNurse[roomId] = false;
 
                 patient = rooms[roomId];
             } catch (InterruptedException e) {
@@ -98,12 +96,14 @@ public class MEvaluationHall implements IEvaluationHall_Patient, IEvaluationHall
             }
 
             nurse.evaluate( patient );
+
             patient.log(String.format("EVR%d", roomId+1));
 
             try {
                 rl.lock();
                 bPatient[roomId] = true;
                 cPatient[roomId].signal();
+                rooms[roomId] = null;
             } finally {
                 rl.unlock();
             }

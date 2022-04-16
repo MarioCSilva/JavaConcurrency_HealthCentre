@@ -96,11 +96,14 @@ public class MMedicalHall implements IMedicalHall_CallCentre, IMedicalHall_Docto
             cNotFull = cNotFullMDRC;
             patientIdx = 0;
         }
-        
-        patient.log("MDH");
 
+        // walk to waiting room
+        patient.tSleep();
+        
         try {
             rlW.lock();
+
+            patient.log("MDH");
 
             // wait for call centre to call him to an MDR
             if (patient.getIsAdult() ) {
@@ -112,7 +115,6 @@ public class MMedicalHall implements IMedicalHall_CallCentre, IMedicalHall_Docto
                     patientWaiting.await();
                 bChildWaiting = false;
             }
-
         } catch (InterruptedException e) {
             e.printStackTrace();
         } finally {
@@ -120,13 +122,9 @@ public class MMedicalHall implements IMedicalHall_CallCentre, IMedicalHall_Docto
         }
 
         patient.notifyExit("MDW");
-        System.out.println("Notifiquei o Call Center que sai do MDH");
-
-        patient.tSleep();
-
+      
         try {
             rl.lock();
-            System.out.println("MMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMM");
 
             // wait while room is full
             while (patientRoom.isFull())
@@ -139,15 +137,14 @@ public class MMedicalHall implements IMedicalHall_CallCentre, IMedicalHall_Docto
             patientRoom.incCounter();
 
             patient.log(String.format("MDR%d", patientIdx+1));
-            System.out.println("PPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPP");
 
         } catch (InterruptedException e) {
                 e.printStackTrace();
         } finally {
-            System.out.println("LLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLL");
             rl.unlock();
         }
 
+        // walk to corresponding medical room
         patient.tSleep();
 
         try {
@@ -161,12 +158,12 @@ public class MMedicalHall implements IMedicalHall_CallCentre, IMedicalHall_Docto
 
             bPatient[patientIdx] = false;
 
-            patientRoom.getPatientById( patientIdx % size );
+            // patientRoom.getPatientById( patientIdx % size );
 
-            if ( patientRoom.isFull() )
-                cNotFull.signal();
+            // if ( patientRoom.isFull() )
+            //     cNotFull.signal();
 
-            patientRoom.decCounter();
+            // patientRoom.decCounter();
 
         } catch (InterruptedException e) {
             e.printStackTrace();
@@ -181,6 +178,19 @@ public class MMedicalHall implements IMedicalHall_CallCentre, IMedicalHall_Docto
     public void work(TDoctor doctor) {
         int roomId = doctor.getRoomId();
         TPatient patient = null;
+        MFIFO patientRoom;
+        int patientIdx;
+        Condition cNotFull;
+
+        if (roomId > 1) {
+            patientRoom = MDRA;
+            patientIdx = roomId % size;
+            cNotFull = cNotFullMDRA;
+        } else {
+            patientRoom = MDRC;
+            patientIdx = roomId;
+            cNotFull = cNotFullMDRC;
+        }
 
         while (true) {
             try {
@@ -191,10 +201,7 @@ public class MMedicalHall implements IMedicalHall_CallCentre, IMedicalHall_Docto
 
                 bDoctor[roomId] = false;
 
-                if (roomId > 1)
-                    patient = MDRA.getFIFO()[ roomId % size ];
-                else
-                    patient = MDRC.getFIFO()[ roomId ];
+                patient = patientRoom.getFIFO()[ patientIdx ];
 
             } catch (InterruptedException e) {
                 e.printStackTrace();
@@ -208,6 +215,14 @@ public class MMedicalHall implements IMedicalHall_CallCentre, IMedicalHall_Docto
                 rl.lock();
                 bPatient[roomId] = true;
                 cPatient[roomId].signal();
+                
+                patientRoom.getPatientById( patientIdx );
+
+                if (patientRoom.isFull())
+                    cNotFull.signal();
+
+                patientRoom.decCounter();
+
             } finally {
                 rl.unlock();
             }

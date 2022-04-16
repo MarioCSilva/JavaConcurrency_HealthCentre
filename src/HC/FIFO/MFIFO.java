@@ -93,7 +93,7 @@ public class MFIFO implements IFIFO {
     public int put(TPatient patient) {
         int i = 0;
         for (i=0; i<size; i++) {
-            if (fifo[i] ==null) {
+            if (fifo[i] == null) {
                 fifo[i] = patient;
                 break;
             }

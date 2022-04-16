@@ -146,9 +146,16 @@ public class MCallCentreHall implements ICallCentreHall_Patient,
         numToCall = freeSpaces <= nToExit ? freeSpaces : nToExit;
         nToExit -= numToCall;
         nToEnter += numToCall;
+
+        if (numToCall == -1) {
+            System.out.println(String.format("%d %d %d", nToExit, nToEnter, maxSeatsHallToEnter));
+        }
         
         System.out.println(String.format("Number to Call %s %d", hallToExit, numToCall));
-        hallPatients.put(hallToExit, nToExit);
+        
+        if (!hallToEnter.equals("MDRA") && !hallToEnter.equals("MDRC"))
+            hallPatients.put(hallToExit, nToExit);
+
         hallPatients.put(hallToEnter, nToEnter);
         
         return numToCall;

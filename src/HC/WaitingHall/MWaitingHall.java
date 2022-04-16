@@ -11,6 +11,11 @@ import java.util.concurrent.locks.ReentrantLock;
 
 public class MWaitingHall implements IWaitingHall_CallCentre, IWaitingHall_Patient {
     private int WTN = 1;
+    private int WTN1 = 1;
+    private int WTN2 = 1;
+    private int currentWTN1 = 1;
+    private int currentWTN2 = 1;
+
     private final int size;
 
     private final ReentrantLock rl;
@@ -29,6 +34,7 @@ public class MWaitingHall implements IWaitingHall_CallCentre, IWaitingHall_Patie
 
     public MWaitingHall(int nos) {
         this.size = nos/2;
+        
         this.rl = new ReentrantLock();
 
         this.WTR1 = new MFIFO(size);
@@ -60,7 +66,6 @@ public class MWaitingHall implements IWaitingHall_CallCentre, IWaitingHall_Patie
         Condition cNotFull = null;
         int patientIdx = 0;
 
-
         if (patient.getIsAdult()) {
             room = "WTR2";
             patientRoom = WTR2;
@@ -79,12 +84,21 @@ public class MWaitingHall implements IWaitingHall_CallCentre, IWaitingHall_Patie
         try {
             rl.lock();
 
-            patient.setTN(WTN++);
+            int patientWTN;
+
+            if (patient.getIsAdult()) {
+                patient.setTN(WTN++);
+                patientWTN = WTN2++;
+            } else {
+                patient.setTN(WTN++);
+                patientWTN = WTN1++;
+            }
 
             patient.log("WTH");
 
-            // wait while fifo is full
-            while (patientRoom.isFull())
+            // wait while room is full
+            while (patientRoom.isFull() || (patient.getIsAdult() && currentWTN2 != patientWTN) ||
+                    (!patient.getIsAdult() && currentWTN1 != patientWTN)) 
                 cNotFull.await();
 
             // assign the patient to a room
@@ -93,6 +107,8 @@ public class MWaitingHall implements IWaitingHall_CallCentre, IWaitingHall_Patie
             // increase fifo counter
             patientRoom.incCounter();
 
+            patient.log(room);
+
         } catch (InterruptedException e) {
             e.printStackTrace();
         } finally {
@@ -100,8 +116,6 @@ public class MWaitingHall implements IWaitingHall_CallCentre, IWaitingHall_Patie
         }
 
         patient.tSleep();
-
-        patient.log(room);
 
         patient.notifyEntrance("WTH");
 
@@ -113,13 +127,6 @@ public class MWaitingHall implements IWaitingHall_CallCentre, IWaitingHall_Patie
                 cArray[ patientIdx ].await();
 
             bExit[ patientIdx ] = false;
-
-            patientRoom.getPatientById(patientIdx);
-
-            if ( patientRoom.isFull() )
-                cNotFull.signal();
-
-            patientRoom.decCounter();
 
         } catch (InterruptedException e) {
             e.printStackTrace();
@@ -143,18 +150,25 @@ public class MWaitingHall implements IWaitingHall_CallCentre, IWaitingHall_Patie
         List<Object> maxPriorityPatient = Arrays.asList(null, 0);
         Condition cArray[];
         boolean bExit[];
+        Condition cNotFull;
+        MFIFO patientRoom;
 
         rl.lock();
 
-        if ( patientType.equals("C") ) {
-            maxPriorityPatient = getHighestPriorityPatient(this.WTR1, maxPriorityPatient);
-            cArray = cArrayWTR1;
-            bExit = bExitWTR1;
-        }
-        else {
+        if ( patientType.equals("A") ) {
+            currentWTN2++;
+            patientRoom = WTR2;
             maxPriorityPatient = getHighestPriorityPatient(this.WTR2, maxPriorityPatient);
             cArray = cArrayWTR2;
             bExit = bExitWTR2;
+            cNotFull = cNotFullWTR2;
+        } else {
+            currentWTN1++;
+            maxPriorityPatient = getHighestPriorityPatient(this.WTR1, maxPriorityPatient);
+            cArray = cArrayWTR1;
+            bExit = bExitWTR1;
+            patientRoom = WTR1;
+            cNotFull = cNotFullWTR1;
         }
 
         int idx = (int) maxPriorityPatient.get(1);
@@ -162,6 +176,12 @@ public class MWaitingHall implements IWaitingHall_CallCentre, IWaitingHall_Patie
         if (maxPriorityPatient.get(0) != null) {
             bExit[idx] = true;
             cArray[idx].signal();
+        
+            patientRoom.getPatientById(idx);
+
+            cNotFull.signalAll();
+
+            patientRoom.decCounter();
         }
 
         rl.unlock();
