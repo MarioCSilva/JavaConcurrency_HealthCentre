@@ -1,0 +1,16 @@
+CC.Communication
+CC.ControllerGUI
+CC.Main
+HC.CallCentreHall
+HC.Communication
+HC.Controller
+HC.ControllerGUI
+HC.Entities
+HC.EntranceHall
+HC.Enumerates
+HC.EvaluationHall
+HC.Main
+HC.MedicalHall
+HC.PaymentHall
+HC.Queue
+HC.WaitingHall
