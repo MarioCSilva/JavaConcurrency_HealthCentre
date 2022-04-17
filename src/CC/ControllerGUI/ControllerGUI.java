@@ -70,4 +70,12 @@ public class ControllerGUI {
                         MessageTopic.MODE
                 ));
     }
+
+    public void movePatient() {
+        System.out.println("Moving a Patient");
+        client.sendMsg(
+                new Message(
+                        MessageTopic.OUTPATIENT
+                ));
+    }
 }

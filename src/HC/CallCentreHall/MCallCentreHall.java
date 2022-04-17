@@ -1,41 +1,26 @@
 package HC.CallCentreHall;
 
+import HC.Controller.IController_CallCentreHall;
 import HC.Entities.TCallCentre;
 import HC.Entities.TPatient;
 
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
+import java.util.concurrent.ThreadLocalRandom;
 import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.ReentrantLock;
 
 public class MCallCentreHall implements ICallCentreHall_Patient,
         ICallCentreHall_CallCentre {
-    private int nPatientsETH;
-    private int nPatientsEVH;
-    private int nPatientsWTH;
-    private int nPatientsMDWAdults;
-    private int nPatientsMDWChildren;
-    private int nPatientsMDRAdults;
-    private int nPatientsMDRChildren;
-    private ReentrantLock lock1;
+    private final ReentrantLock lock1;
+
+    private final IController_CallCentreHall controller;
     private Condition cAwakeCC;
-    private boolean bAwakeCC;
-    private final int maxSeatsEVR = 4;
-    private final int maxSeatsMDW = 1;
-    private final int maxSeatsMDR = 2;
 
-    private HashMap<String, Integer> hallPatients;
+    private final HashMap<String, Integer> hallPatients;
 
-    public MCallCentreHall(int nos) {
-        this.nPatientsETH = 0;
-        this.nPatientsEVH = 0;
-        this.nPatientsWTH = 0;
-
-        this.nPatientsMDWAdults = 0;
-        this.nPatientsMDWChildren = 0;
-
-        this.nPatientsMDRAdults = 0;
-        this.nPatientsMDRChildren = 0;
-
+    public MCallCentreHall(int nos, IController_CallCentreHall controller) {
         this.hallPatients = new HashMap<>();
         this.hallPatients.put("ETH", 0);
         this.hallPatients.put("EVH", 0);
@@ -46,9 +31,9 @@ public class MCallCentreHall implements ICallCentreHall_Patient,
         this.hallPatients.put("MDRA", 0);
         this.hallPatients.put("MDRC", 0);
 
-        this.lock1 = new ReentrantLock();
-        this.cAwakeCC = lock1.newCondition();
-        this.bAwakeCC = false;
+        this.controller = controller;
+        this.lock1 = controller.getCCHLock();
+        this.cAwakeCC = controller.getCAwakeCC();
     }
 
 
@@ -62,7 +47,7 @@ public class MCallCentreHall implements ICallCentreHall_Patient,
         hallPatients.put(hall, patients + 1);
 
         this.cAwakeCC.signal();
-        this.bAwakeCC = true;
+        this.controller.setBAwakeCC(true);
 
         lock1.unlock();
     }
@@ -73,36 +58,65 @@ public class MCallCentreHall implements ICallCentreHall_Patient,
         if (hall.equals("MDW") || hall.equals("MDR"))
             hall += patient.getPatientType();
 
+        System.out.println(patient);
+        System.out.println(Arrays.toString(this.hallPatients.entrySet().toArray()));
+
+
         int patients = hallPatients.get(hall);
         hallPatients.put(hall, patients - 1);
+        System.out.println("a sair");
+        System.out.println(Arrays.toString(this.hallPatients.entrySet().toArray()));
 
         this.cAwakeCC.signal();
-        this.bAwakeCC = true;
+        this.controller.setBAwakeCC(true);
 
         lock1.unlock();
     }
 
     public void work(TCallCentre cc) throws InterruptedException {
         int numToCallETH = 0, numToCallWTHA = 0, numToCallWTHC = 0, numToCallMDWA = 0, numToCallMDWC = 0, i = 0;
-        boolean manual = false;
+        boolean isManualMode = false;
+        int maxSeatsEVR = 4;
+        int maxSeatsMDW = 1;
+        int maxSeatsMDR = 2;
 
         while (true) {
 
             try {
                 lock1.lock();
 
-                while (!this.bAwakeCC)
+                System.out.println("dormir");
+
+                while (!this.controller.getBAwakeCC())
                     this.cAwakeCC.await();
 
-                this.bAwakeCC = false;
+                System.out.println("acordar");
 
-                manual = cc.getController().checkManualMode();
+                this.controller.setBAwakeCC(false);
 
-                numToCallETH = updateNumPatients("ETH", "EVH", maxSeatsEVR);
-                numToCallWTHA = updateNumPatients("WTHA", "MDWA", maxSeatsMDW);
-                numToCallWTHC = updateNumPatients("WTHC", "MDWC", maxSeatsMDW);
-                numToCallMDWA = updateNumPatients("MDWA", "MDRA", maxSeatsMDR);
-                numToCallMDWC = updateNumPatients("MDWC", "MDRC", maxSeatsMDR);
+                isManualMode = cc.getController().checkManualMode();
+
+                int totalCalledPatients = 0;
+
+                numToCallETH = updateNumPatients("ETH", "EVH", maxSeatsEVR,
+                        totalCalledPatients, isManualMode);
+                totalCalledPatients += numToCallETH;
+
+                numToCallWTHC = updateNumPatients("WTHC", "MDWC", maxSeatsMDW,
+                        totalCalledPatients, isManualMode);
+                System.out.println(String.format("WTHC to MDWC %d", numToCallWTHC));
+                totalCalledPatients += numToCallWTHC;
+
+                numToCallWTHA = updateNumPatients("WTHA", "MDWA", maxSeatsMDW,
+                        totalCalledPatients, isManualMode);
+                totalCalledPatients += numToCallWTHA;
+
+                numToCallMDWA = updateNumPatients("MDWA", "MDRA", maxSeatsMDR,
+                        totalCalledPatients, isManualMode);
+                totalCalledPatients += numToCallMDWA;
+
+                numToCallMDWC = updateNumPatients("MDWC", "MDRC", maxSeatsMDR,
+                        totalCalledPatients, isManualMode);
 
             } finally {
                 lock1.unlock();
@@ -124,14 +138,23 @@ public class MCallCentreHall implements ICallCentreHall_Patient,
         }
     }
 
-    public int updateNumPatients(String hallToExit, String hallToEnter, int maxSeatsHallToEnter) {
+    public int updateNumPatients(String hallToExit, String hallToEnter, int maxSeatsHallToEnter,
+                                 int totalCalledPatients, boolean isManualMode) {
         int numToCall = 0;
         int nToExit = hallPatients.get(hallToExit);
         int nToEnter = hallPatients.get(hallToEnter);
 
-
         int freeSpaces = maxSeatsHallToEnter - nToEnter;
         numToCall = freeSpaces <= nToExit ? freeSpaces : nToExit;
+
+        if (isManualMode) {
+            if (totalCalledPatients == 0 && numToCall > 0) {
+                numToCall = 1;
+            } else {
+                numToCall = 0;
+            }
+        }
+
         nToExit -= numToCall;
         nToEnter += numToCall;
 

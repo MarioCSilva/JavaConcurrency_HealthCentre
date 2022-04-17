@@ -14,7 +14,7 @@ import java.util.List;
 import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.ReentrantLock;
 
-public class MController implements IController_ClientHandler, IController_Patient, IController_Cashier, IController_CallCentre, IController_Nurse, IController_Doctor {
+public class MController implements IController_CallCentreHall, IController_ClientHandler, IController_Patient, IController_Cashier, IController_CallCentre, IController_Nurse, IController_Doctor {
     private ReentrantLock rl;
     private BufferedWriter logFile;
     private final String fileName = "log.txt";
@@ -24,7 +24,13 @@ public class MController implements IController_ClientHandler, IController_Patie
 
     private boolean bSuspend;
     private Condition cSuspend;
+
+    private final Condition cAwakeCC;
+    private boolean bAwakeCC;
+
+    private ReentrantLock cchLock;
     private boolean isManualMode;
+    private boolean bMode;
     private Condition cMode;
 
     public MController(ControllerGUI controllerGUI) throws IOException {
@@ -36,12 +42,33 @@ public class MController implements IController_ClientHandler, IController_Patie
         this.rl = new ReentrantLock();
         this.cSuspend = rl.newCondition();
         this.bSuspend = false;
-        this.cMode = rl.newCondition();
-        this.isManualMode = false;
 
+        this.cchLock = new ReentrantLock();
+        this.cMode = this.cchLock.newCondition();
+        this.isManualMode = false;
+        this.bMode = false;
+
+        this.cAwakeCC = cchLock.newCondition();
+        this.bAwakeCC = false;
 
         this.headers = new ArrayList<>(Arrays.asList("STT", "ETH", "ET1", "ET2", "EVR1", "EVR2",
                 "EVR3", "EVR4", "WTH", "WTR1", "WTR2", "MDH", "MDR1", "MDR2", "MDR3", "MDR4", "PYH", "OUT"));
+    }
+
+    public void setBAwakeCC(boolean b) {
+        this.bAwakeCC = b;
+    }
+
+    public Condition getCAwakeCC() {
+        return cAwakeCC;
+    }
+
+    public boolean getBAwakeCC() {
+        return bAwakeCC;
+    }
+
+    public ReentrantLock getCCHLock() {
+        return cchLock;
     }
 
     public void writeHeaders() throws IOException {
@@ -155,23 +182,41 @@ public class MController implements IController_ClientHandler, IController_Patie
     }
 
     public boolean checkManualMode() throws InterruptedException {
-        try {
-            rl.lock();
-
-            while (isManualMode)
+        if (isManualMode) {
+            while (!bMode)
                 cMode.await();
-
-            return true;
-
-        } finally {
-            rl.unlock();
+            bMode = false;
         }
+        return isManualMode;
     }
 
     public void changeOperatingMode() {
-        this.isManualMode = !this.isManualMode;
-        if (!this.isManualMode)
+        cchLock.lock();
+        if (this.isManualMode) {
+
+            bMode = true;
             cMode.signal();
+
+            bAwakeCC = true;
+            cAwakeCC.signal();
+        }
+        this.isManualMode = !this.isManualMode;
+        cchLock.unlock();
+    }
+
+    public void movePatient() {
+        if (this.isManualMode) {
+            cchLock.lock();
+
+            bMode = true;
+            cMode.signal();
+
+            bAwakeCC = true;
+            cAwakeCC.signal();
+
+            cchLock.unlock();
+        }
+
     }
 
     public boolean getIsManualMode() {

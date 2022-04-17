@@ -4,6 +4,7 @@ import HC.Communication.Message;
 
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.util.concurrent.locks.ReentrantLock;
 
 public interface IController_ClientHandler {
     void write(String msg) throws IOException;
@@ -23,4 +24,8 @@ public interface IController_ClientHandler {
     void endSimulation() throws IOException;
 
     void changeOperatingMode();
+
+    void movePatient();
+
+    ReentrantLock getCCHLock();
 }

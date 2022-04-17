@@ -59,7 +59,8 @@ public class TClientHandler implements Runnable {
 
     public void startSimulation(Message msg) throws IOException {
         // initiate monitors
-        cch = new MCallCentreHall(msg.getNos());
+        cch = new MCallCentreHall(msg.getNos(), (IController_CallCentreHall) defaultController);
+
         eth = new MEntranceHall(msg.getNos());
         meh = new MEvaluationHall();
         wth = new MWaitingHall(msg.getNos());
@@ -156,8 +157,14 @@ public class TClientHandler implements Runnable {
                         clientController.endSimulation();
                         break;
                     case MODE:
+                        System.out.println("Changing Operating Mode");
                         // option = {manual, auto}
                         clientController.changeOperatingMode();
+                        break;
+                    case OUTPATIENT:
+                        System.out.println("Moving a Patient");
+                        // move patient when manual mode is on
+                        clientController.movePatient();
                         break;
                     default:
                         break label;
