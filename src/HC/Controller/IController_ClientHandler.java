@@ -21,4 +21,6 @@ public interface IController_ClientHandler {
     void startSimulation(Message msg) throws InterruptedException, IOException;
 
     void endSimulation() throws IOException;
+
+    void changeOperatingMode();
 }

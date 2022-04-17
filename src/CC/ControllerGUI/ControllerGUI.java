@@ -7,9 +7,11 @@ import HC.Enumerates.MessageTopic;
 
 public class ControllerGUI {
     private final Client client;
+    private boolean isManualMode;
 
     public ControllerGUI(Client client) {
         this.client = client;
+        this.isManualMode = false;
     }
 
     public void startSimulation(int numberOfAdults, int numberOfChildren, int nos, int evt, int mdt, int pyt, int ttm) {
@@ -62,5 +64,10 @@ public class ControllerGUI {
 
     public void changeOperatingMode() {
         System.out.println("Changed Operating mode");
+        this.isManualMode = ! this.isManualMode;
+        client.sendMsg(
+                new Message(
+                        MessageTopic.MODE
+                ));
     }
 }

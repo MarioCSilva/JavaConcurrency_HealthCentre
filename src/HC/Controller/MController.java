@@ -24,8 +24,11 @@ public class MController implements IController_ClientHandler, IController_Patie
 
     private boolean bSuspend;
     private Condition cSuspend;
+    private boolean isManualMode;
+    private Condition cMode;
 
     public MController(ControllerGUI controllerGUI) throws IOException {
+        // default mode is automatic
         this.controllerGUI = controllerGUI;
         new File(this.fileName);
         this.logFile = new BufferedWriter(new FileWriter(fileName));
@@ -33,6 +36,9 @@ public class MController implements IController_ClientHandler, IController_Patie
         this.rl = new ReentrantLock();
         this.cSuspend = rl.newCondition();
         this.bSuspend = false;
+        this.cMode = rl.newCondition();
+        this.isManualMode = false;
+
 
         this.headers = new ArrayList<>(Arrays.asList("STT", "ETH", "ET1", "ET2", "EVR1", "EVR2",
                 "EVR3", "EVR4", "WTH", "WTR1", "WTR2", "MDH", "MDR1", "MDR2", "MDR3", "MDR4", "PYH", "OUT"));
@@ -146,5 +152,29 @@ public class MController implements IController_ClientHandler, IController_Patie
         this.logFile.flush();
 
         rl.unlock();
+    }
+
+    public boolean checkManualMode() throws InterruptedException {
+        try {
+            rl.lock();
+
+            while (isManualMode)
+                cMode.await();
+
+            return true;
+
+        } finally {
+            rl.unlock();
+        }
+    }
+
+    public void changeOperatingMode() {
+        this.isManualMode = !this.isManualMode;
+        if (!this.isManualMode)
+            cMode.signal();
+    }
+
+    public boolean getIsManualMode() {
+        return isManualMode;
     }
 }

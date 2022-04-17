@@ -14,6 +14,11 @@ public class TCallCentre extends Thread {
     private final ICallCentreHall_CallCentre cch;
     private final IWaitingHall_CallCentre wth;
     private final IMedicalHall_CallCentre mdh;
+
+    public IController_CallCentre getController() {
+        return controller;
+    }
+
     private final IController_CallCentre controller;
 
     public TCallCentre(IController_CallCentre controller, IEntranceHall_CallCentre eth, ICallCentreHall_CallCentre cch,

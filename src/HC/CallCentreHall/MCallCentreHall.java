@@ -84,6 +84,7 @@ public class MCallCentreHall implements ICallCentreHall_Patient,
 
     public void work(TCallCentre cc) throws InterruptedException {
         int numToCallETH = 0, numToCallWTHA = 0, numToCallWTHC = 0, numToCallMDWA = 0, numToCallMDWC = 0, i = 0;
+        boolean manual = false;
 
         while (true) {
 
@@ -94,6 +95,8 @@ public class MCallCentreHall implements ICallCentreHall_Patient,
                     this.cAwakeCC.await();
 
                 this.bAwakeCC = false;
+
+                manual = cc.getController().checkManualMode();
 
                 numToCallETH = updateNumPatients("ETH", "EVH", maxSeatsEVR);
                 numToCallWTHA = updateNumPatients("WTHA", "MDWA", maxSeatsMDW);

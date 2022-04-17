@@ -157,6 +157,7 @@ public class TClientHandler implements Runnable {
                         break;
                     case MODE:
                         // option = {manual, auto}
+                        clientController.changeOperatingMode();
                         break;
                     default:
                         break label;

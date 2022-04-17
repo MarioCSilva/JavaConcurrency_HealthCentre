@@ -101,6 +101,12 @@ public class GUICC extends JPanel {
             }
         });
 
+        manualModeRadioButton.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                controllerGUI.changeOperatingMode();
+            }
+        });
     }
 
     {
