@@ -24,13 +24,11 @@ public class MWaitingHall implements IWaitingHall_CallCentre, IWaitingHall_Patie
     private final Condition cArrayWTR1[];
     private final boolean[] bExitWTR1;
     private final Condition cNotFullWTR1;
-    private final Condition cNotEmptyWTR1;
 
     private final PriorityQueue WTR2;
     private final Condition cArrayWTR2[];
     private final boolean[] bExitWTR2;
     private final Condition cNotFullWTR2;
-    private final Condition cNotEmptyWTR2;
 
 
     public MWaitingHall(int nos) {
@@ -40,13 +38,11 @@ public class MWaitingHall implements IWaitingHall_CallCentre, IWaitingHall_Patie
 
         this.WTR1 = new PriorityQueue(size);
         this.cArrayWTR1 = new Condition[size];
-        this.cNotEmptyWTR1 = rl.newCondition();
         this.cNotFullWTR1 = rl.newCondition();
         this.bExitWTR1 = new boolean[size];
 
         this.WTR2 = new PriorityQueue(size);
         this.cArrayWTR2 = new Condition[size];
-        this.cNotEmptyWTR2 = rl.newCondition();
         this.cNotFullWTR2 = rl.newCondition();
         this.bExitWTR2 = new boolean[size];
 
@@ -58,12 +54,19 @@ public class MWaitingHall implements IWaitingHall_CallCentre, IWaitingHall_Patie
         }
     }
 
+    
+    /** 
+     * Method to be called by a Patient Entity to enter this hall.
+     *
+     * @param patient a Patient that has entered a Hall
+     * @throws InterruptedException
+     * @throws IOException
+    */
     public void enterHall(TPatient patient) throws InterruptedException, IOException {
         PriorityQueue patientRoom = null;
         String room = null;
         Condition cArray[] = null;
         boolean bExit[] = null;
-        Condition cNotEmpty = null;
         Condition cNotFull = null;
         int patientIdx = 0;
 
@@ -71,14 +74,12 @@ public class MWaitingHall implements IWaitingHall_CallCentre, IWaitingHall_Patie
             room = "WTR2";
             patientRoom = WTR2;
             cArray = cArrayWTR2;
-            cNotEmpty = cNotEmptyWTR2;
             cNotFull = cNotFullWTR2;
             bExit = bExitWTR2;
         } else {
             room = "WTR1";
             patientRoom = WTR1;
             cArray = cArrayWTR1;
-            cNotEmpty = cNotEmptyWTR1;
             cNotFull = cNotFullWTR1;
             bExit = bExitWTR1;
         }
@@ -136,6 +137,14 @@ public class MWaitingHall implements IWaitingHall_CallCentre, IWaitingHall_Patie
         }
     }
 
+    
+    /** 
+     * Get the patient with the highest priority from the queue @ETR.
+     * The priority is defined by the Patients DoS and @ETN variable.
+     * @param WTR A priority Queue where the Patient is.
+     * @param maxPriorityPatient aTuple with the Patient, and the index where Patient is in the priority queue
+     * @return List<Object> a Tuple with the Patient, and the index where Patient is in the priority queue
+     */
     public List<Object> getHighestPriorityPatient(PriorityQueue WTR, List<Object> maxPriorityPatient) {
         for (int i = 0; i < size; i++) {
             TPatient patient = WTR.getQueue()[i];
@@ -147,6 +156,10 @@ public class MWaitingHall implements IWaitingHall_CallCentre, IWaitingHall_Patie
         return maxPriorityPatient;
     }
 
+    
+    /** 
+     * @param patientType the Type of the Patient: A for Adults and C for Children
+     */
     public void exitHall(String patientType) {
         List<Object> maxPriorityPatient = Arrays.asList(null, 0);
         Condition cArray[];

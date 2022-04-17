@@ -123,9 +123,7 @@ public class GUICC extends JPanel {
             @Override
             public void actionPerformed(ActionEvent e) {
                 controllerGUI.changeOperatingMode();
-                System.out.println(isManual);
                 isManual = !isManual;
-                System.out.println(isManual);
                 if (!isManual)
                     moveButton.setEnabled(false);
                 else

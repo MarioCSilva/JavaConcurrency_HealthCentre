@@ -3,7 +3,7 @@
  * Click nbfs://nbhost/SystemFileSystem/Templates/Classes/package-info.java to edit this template
  */
 /**
- * This package contains all the Shared Regions (Monitors) and all the Interfaces used by
- * Threads to access them.
+ * This package contains the functionalities responsible for the communications with
+ * the other process.
  */
-package Process1.Monitor;
+package HC.WaitingHall;

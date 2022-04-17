@@ -18,6 +18,12 @@ public class ControllerGUI {
         this.patientList = new HashMap<>();
     }
 
+    
+    /** 
+     * @param patient
+     * @param room
+     * @throws InterruptedException
+     */
     public void movePatient(TPatient patient, String room) throws InterruptedException {
         DefaultListModel listToEnter = null;
         DefaultListModel listToRemove = null;
@@ -80,6 +86,13 @@ public class ControllerGUI {
         movePatientGUI(listToRemove, listToEnter, patient);
     }
 
+    
+    /** 
+     * @param listToRemove
+     * @param listToEnter
+     * @param patient
+     * @throws InterruptedException
+     */
     public void movePatientGUI(DefaultListModel listToRemove, DefaultListModel listToEnter, TPatient patient) throws InterruptedException {
         try {
             queue.invokeAndWait(() -> {
@@ -92,6 +105,10 @@ public class ControllerGUI {
         }
     }
 
+    
+    /** 
+     * @throws InterruptedException
+     */
     public void clearGUI() throws InterruptedException {
         this.patientList = new HashMap<>();
 

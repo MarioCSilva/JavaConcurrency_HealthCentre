@@ -3,6 +3,7 @@
  * Click nbfs://nbhost/SystemFileSystem/Templates/Classes/package-info.java to edit this template
  */
 /**
- * This package contains ....
+ * This package contains the functionalities responsible for Controlling the interface.
+ *
  */
-package Process1.Main;
+package HC.ControllerGUI;

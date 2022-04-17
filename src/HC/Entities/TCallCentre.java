@@ -15,10 +15,6 @@ public class TCallCentre extends Thread {
     private final IWaitingHall_CallCentre wth;
     private final IMedicalHall_CallCentre mdh;
 
-    public IController_CallCentre getController() {
-        return controller;
-    }
-
     private final IController_CallCentre controller;
 
     public TCallCentre(IController_CallCentre controller, IEntranceHall_CallCentre eth, ICallCentreHall_CallCentre cch,
@@ -40,32 +36,63 @@ public class TCallCentre extends Thread {
         }
     }
 
-
+    
+    /**
+     * Method responsible for killing the Thread
+     */
     public void kill() {
         this.interrupt();
     }
 
 
+    /** 
+     * @throws InterruptedException
+     */
     public void callETHPatient() throws InterruptedException {
         controller.checkSuspend();
         eth.exitHall();
     }
 
+    
+    /** 
+     * 
+     * @throws InterruptedException
+     */
     public void callWTHAPatient() throws InterruptedException {
         controller.checkSuspend();
         wth.exitHall("A");
     }
 
+    
+    /** 
+     * @throws InterruptedException
+     */
     public void callWTHCPatient() throws InterruptedException {
         controller.checkSuspend();
         wth.exitHall("C");
     }
 
+    
+    /** 
+     * @throws InterruptedException
+     */
     public void callMDWAPatient() throws InterruptedException {
         controller.checkSuspend();
         mdh.exitWaitingRoom("A");
     }
 
+        
+    /** 
+     * @return IController_CallCentre
+     */
+    public IController_CallCentre getController() {
+        return controller;
+    }
+
+    
+    /** 
+     * @throws InterruptedException
+     */
     public void callMDWCPatient() throws InterruptedException {
         controller.checkSuspend();
         mdh.exitWaitingRoom("C");

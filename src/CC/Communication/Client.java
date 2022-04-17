@@ -39,6 +39,10 @@ public class Client extends Thread {
         }
     }
 
+    
+    /** 
+     * @param msg
+     */
     public void sendMsg(Message msg) {
         try {
             out.writeObject(msg);

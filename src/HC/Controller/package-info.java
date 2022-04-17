@@ -4,6 +4,6 @@
  */
 /**
  * This package contains the functionalities responsible for the communications with
- * the other process.
+ * the Controller Monitor.
  */
-package Process1.Communication;
+package HC.Controller;

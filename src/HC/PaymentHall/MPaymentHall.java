@@ -36,6 +36,14 @@ public class MPaymentHall implements IPaymentHall_Cashier, IPaymentHall_Patient 
         }
     }
 
+    
+    /** 
+     * Method to be called by a Patient Entity to enter this hall.
+     *
+     * @param patient a Patient that has entered a Hall
+     * @throws InterruptedException
+     * @throws IOException
+     */
     public void enterHall(TPatient patient) throws InterruptedException, IOException {
         int patientIdx = 0;
 
@@ -44,7 +52,7 @@ public class MPaymentHall implements IPaymentHall_Cashier, IPaymentHall_Patient 
             rl.lock();
 
             int patientPYN = PYN++;
-
+            // assign a Payment Number to the Patient
             patient.setTN(patientPYN);
 
             patient.log("PYH");
@@ -78,6 +86,14 @@ public class MPaymentHall implements IPaymentHall_Cashier, IPaymentHall_Patient 
         }
     }
 
+    
+    /** 
+     * Method called by the Cashier check for patients in its room and check them.
+     *
+     * @param cashier the Cashier of the room
+     * @throws InterruptedException
+     * @throws IOException
+     */
     @Override
     public void work(TCashier cashier) throws InterruptedException, IOException {
         TPatient patient;
@@ -87,12 +103,15 @@ public class MPaymentHall implements IPaymentHall_Cashier, IPaymentHall_Patient 
             patient = null;
             try {
                 rl.lock();
-
+                // if the Cashier has been signaled twice, it wont do
+                // two payments at the same time, neither retrieve a patient from the queue
+                // if no patients are on it
                 while (numPayments == 0)
                     cCashier.await();
 
                 numPayments--;
-
+                
+                // gets the patient with higher priority, regarding its PYN
                 for (int i = 0; i < size; i++) {
                     if (paymentQueue.getQueue()[i] != null && (patient == null || patient.getTN() > paymentQueue.getQueue()[i].getTN())) {
                         patient = paymentQueue.getQueue()[i];
@@ -102,16 +121,17 @@ public class MPaymentHall implements IPaymentHall_Cashier, IPaymentHall_Patient 
             } finally {
                 rl.unlock();
             }
-
+            // cashier received the payment
             cashier.receivePayment();
 
             try {
                 rl.lock();
+                //signals the patient in cause to end its lifecycle
                 bArrayPQ[patientIdx] = true;
                 cArrayPQ[patientIdx].signal();
 
                 currentPYN++;
-
+                // write on the logger
                 paymentQueue.getQueue()[patientIdx].log("OUT");
 
                 paymentQueue.getPatientById(patientIdx);

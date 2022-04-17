@@ -12,6 +12,11 @@ public class PriorityQueue {
         this.queue = new TPatient[size];
     }
 
+    
+    /** 
+     * @param patient a patient to be put on the Queue
+     * @return the index occupied on the queue
+     */
     public int put(TPatient patient) {
         int i;
         for (i = 0; i < size; i++) {
@@ -24,6 +29,10 @@ public class PriorityQueue {
     }
 
 
+    
+    /** 
+     * @return the Queue Array
+     */
     public TPatient[] getQueue() {
         return queue;
     }
@@ -36,10 +45,20 @@ public class PriorityQueue {
         count--;
     }
 
+    
+    /** 
+     * Check if queue is full
+     * @return boolean
+     */
     public boolean isFull() {
         return count == size;
     }
 
+    
+    /** 
+     * Retrieves a patient from the queue, emptying the index queue assigned
+     * @param idx the index of the patient to be retrieved
+     */
     public void getPatientById(int idx) {
         queue[idx] = null;
     }

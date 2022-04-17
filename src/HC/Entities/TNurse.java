@@ -25,6 +25,15 @@ public class TNurse extends Thread {
         this.evh = evh;
     }
 
+    
+    /** 
+     * Method that doctor executes for doing the evaluation.
+     * Thread sleeps for a random range defined by EVT.
+     * If EVT is zero this does not apply.
+     * Assigns a random DoS for the @patient
+     * @param patient Patient to be evaluated by a Nurse
+     * @throws InterruptedException
+     */
     public void evaluate(TPatient patient) throws InterruptedException {
         controller.checkSuspend();
 
@@ -55,11 +64,18 @@ public class TNurse extends Thread {
         }
     }
 
+    /**
+     * Method responsible for killing the thread
+     */
     public void kill() {
         this.interrupt();
     }
 
 
+    
+    /** 
+     * @return int the room index where the Nurse is Assigned
+     */
     public int getRoomId() {
         return roomId;
     }

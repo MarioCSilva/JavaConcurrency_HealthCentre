@@ -57,6 +57,13 @@ public class TClientHandler implements Runnable {
     }
 
 
+    
+    /** 
+     * Starts the simulation by creating all necessary monitors and active entities 
+     *
+     * @param msg Message object received by the Control Centre
+     * @throws IOException
+     */
     public void startSimulation(Message msg) throws IOException {
         // initiate monitors
         cch = new MCallCentreHall(msg.getNos(), (IController_CallCentreHall) defaultController);
@@ -97,7 +104,7 @@ public class TClientHandler implements Runnable {
             childPatients[i].start();
         }
     }
-
+    
     public void run() {
         try {
             // get the output stream of client

@@ -3,6 +3,7 @@
  * Click nbfs://nbhost/SystemFileSystem/Templates/Classes/package-info.java to edit this template
  */
 /**
- * This package contains the functionalities responsible for the Log.
+ * This package contains the functionalities responsible for the communications with
+ * the other process(HC).
  */
-package Process1.Controller;
+package CC.Communication;

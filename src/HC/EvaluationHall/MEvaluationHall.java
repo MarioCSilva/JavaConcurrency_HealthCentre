@@ -36,25 +36,33 @@ public class MEvaluationHall implements IEvaluationHall_Patient, IEvaluationHall
         }
     }
 
+    
+    /** 
+     * Method to be called by a Patient Entity to enter this hall.
+     *
+     * @param patient a Patient that has entered a Hall
+     * @throws InterruptedException
+     * @throws IOException
+     */
     public void enterHall(TPatient patient) throws InterruptedException, IOException {
         int chosenEVR = 0;
-
+        // sleep between halls/rooms
         patient.tSleep();
 
         try {
             rl.lock();
-
+            // chooses an empty EVR for the Patient
             for (int i = 0; i < nRooms; i++) {
                 if (rooms[i] == null) {
                     chosenEVR = i;
                     break;
                 }
             }
-
+            //write the room where the patient has been assigned to the log file
             patient.log(String.format("EVR%d", chosenEVR + 1));
 
             rooms[chosenEVR] = patient;
-
+            //wake up the nurse where the Patient is
             bNurse[chosenEVR] = true;
             cNurse[chosenEVR].signal();
 
@@ -73,7 +81,16 @@ public class MEvaluationHall implements IEvaluationHall_Patient, IEvaluationHall
     }
 
 
+    
+    /** 
+     * Method called by the Nurse check for patients in its room and evaluate them.
+     *
+     * @param nurse the Nurse of the room
+     * @throws InterruptedException
+     * @throws IOException
+     */
     public void work(TNurse nurse) throws InterruptedException, IOException {
+        //get the Index of the Room where the nurse is
         int roomId = nurse.getRoomId();
         TPatient patient = null;
 
@@ -81,16 +98,17 @@ public class MEvaluationHall implements IEvaluationHall_Patient, IEvaluationHall
             try {
                 rl.lock();
 
+                //check if its the respective nurse's room if not, awaits
                 while (!bNurse[roomId])
                     cNurse[roomId].await();
 
                 bNurse[roomId] = false;
-
+                // get the patient in the room
                 patient = rooms[roomId];
             } finally {
                 rl.unlock();
             }
-
+            //evaluate the patient
             nurse.evaluate(patient);
 
             patient.log(String.format("EVR%d", roomId + 1));
@@ -98,6 +116,7 @@ public class MEvaluationHall implements IEvaluationHall_Patient, IEvaluationHall
             try {
                 rl.lock();
                 bPatient[roomId] = true;
+                // signal the patient to carry on its lifecycle
                 cPatient[roomId].signal();
                 rooms[roomId] = null;
             } finally {

@@ -19,20 +19,28 @@ public class TDoctor extends Thread {
         this.mdh = mdh;
     }
 
+    /**
+     * Method Responsible for killing the Thread
+     */
     public void kill() {
         this.interrupt();
     }
 
-
+    /** 
+     * Method that doctor executes for doing the doctor appointment.
+     * Thread sleeps for a random range defined by MDT.
+     * If MDT is zero this does not apply.
+     *
+     * @param patient Patient to be checked by a Doctor
+     * @throws InterruptedException
+     */
     public void evaluate(TPatient patient) throws InterruptedException {
         controller.checkSuspend();
         // evaluation time
         if (MDT > 0) {
             try {
                 TimeUnit.MILLISECONDS.sleep(new Random().nextInt(MDT));
-            } catch (InterruptedException e) {
-            }
-            ;
+            } catch (InterruptedException e) {};
             controller.checkSuspend();
         }
     }
@@ -47,6 +55,10 @@ public class TDoctor extends Thread {
         }
     }
 
+
+    /** 
+     * @return int the index of the room where the Doctor is assigned.
+     */
     public int getRoomId() {
         return roomId;
     }

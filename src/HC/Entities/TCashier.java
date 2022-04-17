@@ -19,9 +19,16 @@ public class TCashier extends Thread {
         this.pyh = pyh;
     }
 
+    
+    /** 
+     * Method used to receive Payments from a Patient.
+     * Theads sleeps a random time to the range applied by PYT,
+     * if greater than zero.
+     * @throws InterruptedException
+     */
     public void receivePayment() throws InterruptedException {
         controller.checkSuspend();
-        // evaluation time
+        // payment time
         if (PYT > 0) {
             try {
                 int appTime = new Random().nextInt(PYT);
@@ -42,7 +49,9 @@ public class TCashier extends Thread {
             Thread.currentThread().interrupt();
         }
     }
-
+    /**
+     * Method responsible for killing the Thread
+     */
     public void kill() {
         this.interrupt();
     }

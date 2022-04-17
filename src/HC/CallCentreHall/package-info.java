@@ -3,6 +3,7 @@
  * Click nbfs://nbhost/SystemFileSystem/Templates/Classes/package-info.java to edit this template
  */
 /**
- * This package contains all the active entities (Threads)
+ * This package contains the functionalities responsible for the communications with
+ * the Call Centre Hall. 
  */
-package Process1.Entities;
+package HC.CallCentreHall;

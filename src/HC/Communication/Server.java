@@ -25,8 +25,7 @@ public class Server {
     public void start() {
         try {
             serverSocket = new ServerSocket(port);
-            System.out.println(serverSocket.getInetAddress());
-            System.out.println(serverSocket.getLocalPort());
+
             // running infinite loop for getting
             // client request
             while (true) {

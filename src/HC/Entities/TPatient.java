@@ -43,10 +43,16 @@ public class TPatient extends Thread {
         this.ttm = ttm;
     }
 
+    /**
+     * Method Responsible for killing the Thread
+     */
     public void kill() {
         this.interrupt();
     }
 
+    /**
+     * Method every patient will execute following the same order.
+     */
     @Override
     public void run() {
         try {
@@ -81,18 +87,39 @@ public class TPatient extends Thread {
         }
     }
 
+    
+    /** 
+     * Method used to written to the log. 
+     * @param room the room where the patient is. 
+     * @throws InterruptedException
+     * @throws IOException
+     */
     public void log(String room) throws InterruptedException, IOException {
         controller.writePatientMovement(this, room);
     }
 
+    
+    /**
+     * Notifies the CallCentreHall of Entering a Hall
+     * @param hall the String identifier of the Hall the Patient has Entered
+     */
     public void notifyEntrance(String hall) {
         mCallCentreHall.notifyEntrance(this, hall);
     }
 
+    
+    /**
+     * Notifies the CallCentreHall of leaving a Hall
+     * @param hall the String identifier of the Hall the Patient has left
+     */
     public void notifyExit(String hall) {
         mCallCentreHall.notifyExit(this, hall);
     }
 
+    
+    /** 
+     * @throws InterruptedException
+     */
     public void tSleep() throws InterruptedException {
         checkSuspend();
 
@@ -102,39 +129,77 @@ public class TPatient extends Thread {
         }
     }
 
+    
+    /** 
+     * Checks and awaits for a resume signal if the process has been suspended.
+     *
+     * @throws InterruptedException
+     */
     public void checkSuspend() throws InterruptedException {
         controller.checkSuspend();
     }
 
+    
+    /** 
+     * @return boolean
+     */
     public boolean getIsAdult() {
         return this.isAdult;
     }
 
+    
+    /** 
+     * @return String
+     */
     public String getPatientType() {
         return this.patientType;
     }
 
+    
+    /** 
+     * @return int
+     */
     public int getPatientId() {
         return this.patientId;
     }
 
+    
+    /** 
+     * @param TN
+     */
     public void setTN(int TN) {
         this.TN = TN;
     }
 
+    
+    /** 
+     * @return Integer
+     */
     public Integer getTN() {
         return this.TN;
     }
 
 
+    
+    /** 
+     * @param dos
+     */
     public void setDoS(DoS dos) {
         this.dos = dos;
     }
 
+    
+    /** 
+     * @return DoS
+     */
     public DoS getDoS() {
         return this.dos;
     }
 
+    
+    /** 
+     * @return String
+     */
     @Override
     public String toString() {
         String adultStr = this.isAdult ? "A" : "C";

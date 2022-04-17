@@ -31,13 +31,11 @@ public class MMedicalHall implements IMedicalHall_CallCentre, IMedicalHall_Docto
     private final Condition cArrayMDRA[];
     private final boolean[] bExitMDRA;
     private final Condition cNotFullMDRA;
-    private final Condition cNotEmptyMDRA;
 
     private final PriorityQueue MDRC;
     private final Condition cArrayMDRC[];
     private final boolean[] bExitMDRC;
     private final Condition cNotFullMDRC;
-    private final Condition cNotEmptyMDRC;
 
     public MMedicalHall() {
         this.rlW = new ReentrantLock();
@@ -62,13 +60,11 @@ public class MMedicalHall implements IMedicalHall_CallCentre, IMedicalHall_Docto
 
         this.MDRA = new PriorityQueue(size);
         this.cArrayMDRA = new Condition[size];
-        this.cNotEmptyMDRA = rl.newCondition();
         this.cNotFullMDRA = rl.newCondition();
         this.bExitMDRA = new boolean[size];
 
         this.MDRC = new PriorityQueue(size);
         this.cArrayMDRC = new Condition[size];
-        this.cNotEmptyMDRC = rl.newCondition();
         this.cNotFullMDRC = rl.newCondition();
         this.bExitMDRC = new boolean[size];
 
@@ -80,6 +76,14 @@ public class MMedicalHall implements IMedicalHall_CallCentre, IMedicalHall_Docto
         }
     }
 
+    
+    /** 
+     * Method to be called by a Patient Entity to enter this hall.
+     *
+     * @param patient a Patient that has entered a Hall
+     * @throws InterruptedException
+     * @throws IOException
+     */
     public void enterHall(TPatient patient) throws InterruptedException, IOException {
         PriorityQueue patientRoom = null;
         Condition cNotFull = null;
@@ -122,7 +126,7 @@ public class MMedicalHall implements IMedicalHall_CallCentre, IMedicalHall_Docto
         } finally {
             rlW.unlock();
         }
-
+        //notify the Call Centre Hall that has left the Medical Waiting Hall
         patient.notifyExit("MDW");
 
         try {
@@ -149,7 +153,7 @@ public class MMedicalHall implements IMedicalHall_CallCentre, IMedicalHall_Docto
 
         try {
             rl.lock();
-
+            //signal the doctor in the respective room
             bDoctor[patientIdx] = true;
             cDoctor[patientIdx].signal();
 
@@ -173,6 +177,14 @@ public class MMedicalHall implements IMedicalHall_CallCentre, IMedicalHall_Docto
     }
 
 
+    
+     /** 
+     * Method called by the Doctor check for patients in its room and check them.
+     *
+     * @param doctor the Doctor of the room
+     * @throws InterruptedException
+     * @throws IOException
+     */
     public void work(TDoctor doctor) throws InterruptedException {
         int roomId = doctor.getRoomId();
         TPatient patient = null;
@@ -193,7 +205,7 @@ public class MMedicalHall implements IMedicalHall_CallCentre, IMedicalHall_Docto
         while (true) {
             try {
                 rl.lock();
-
+                //check if its the respective doctor's room if not, awaits
                 while (!bDoctor[roomId])
                     cDoctor[roomId].await();
 
@@ -206,11 +218,12 @@ public class MMedicalHall implements IMedicalHall_CallCentre, IMedicalHall_Docto
             } finally {
                 rl.unlock();
             }
-
+            // doctor appointment
             doctor.evaluate(patient);
 
             try {
                 rl.lock();
+                //signal the Patient to carry on its lifecycle
                 bPatient[roomId] = true;
                 cPatient[roomId].signal();
 
@@ -227,6 +240,11 @@ public class MMedicalHall implements IMedicalHall_CallCentre, IMedicalHall_Docto
         }
     }
 
+    
+    /** 
+     * Signals the patient on the waiting room
+     * @param patientType the Type of the Patient: A for Adults and C for Children
+     */
     public void exitWaitingRoom(String patientType) {
         rlW.lock();
 
